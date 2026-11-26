@@ -31,6 +31,8 @@
   .times{margin-top:6px; font-size:14.5px;}
   .times b{color:var(--clay); font-weight:normal;}
   .note{margin-top:3px; font-size:13.5px; color:var(--muted); font-style:italic;}
+  .recipe{margin-top:8px;}
+  .recipe a{color:var(--clay); font-weight:bold; text-decoration:none; font-size:14.5px;}
   .actions{margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;}
   button{font-family:inherit; font-size:13.5px; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:9px; padding:6px 12px; cursor:pointer;}
   button.primary{background:var(--sage); border-color:var(--sage); color:#fff;}
@@ -81,6 +83,7 @@
           <label>Up to (optional, for ranges) <input name="durMax" type="number" min="1" placeholder="300"></label>
         </div>
         <label>Note <input name="note" placeholder="e.g. needs to rise, in the oven…"></label>
+        <label>Recipe link (optional) <input type="url" name="recipe" placeholder="https://…"></label>
         <button class="primary" type="submit">Add to the board</button>
       </form>
     </details>
@@ -129,6 +132,19 @@ function fmtDur(m){
 }
 function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+const DISH_RECIPES = {
+  'Chicken': {url:'https://recime.app/p/03290a5f-4d98-4575-9628-9c0861d967b7', label:'View the full recipe (ReciMe)'},
+  'Sweet potato soufflé': {url:'https://drive.google.com/file/d/1OHmJMNcK9egct7LYlFc801T2VRlba2ME/view?usp=drivesdk', label:'Aunt Nell’s recipe card (photo)'},
+  'Sweet potatoes': {url:'https://drive.google.com/file/d/1OHmJMNcK9egct7LYlFc801T2VRlba2ME/view?usp=drivesdk', label:'Aunt Nell’s recipe card (photo)'},
+  'Stuffing': {url:'https://drive.google.com/file/d/1cX2--ibS0xUf-bHT0f5OHUhNvgzxJukz/view?usp=drivesdk', label:'Directions on the bag (photo)'},
+  'Blondies': {url:'https://drive.google.com/file/d/1ys7TsY-cUhLcHQpIfvK7gM-C-vdyNPZx/view?usp=drivesdk', label:'Directions on the box (photo)'}
+};
+function recipeLine(it){
+  const r = it.recipe ? {url: it.recipe, label:'View the recipe'} : DISH_RECIPES[it.dish||''];
+  if(!r) return '';
+  return `<div class="recipe"><a href="${esc(r.url)}" target="_blank" rel="noopener">📖 ${esc(r.label)}</a></div>`;
+}
+
 function allItems(){
   const doneMap=loadMap(DKEY), startMap=loadMap(SKEY);
   return [...SEED.map(s=>({...s, done: !!doneMap[s.id], started: !!startMap[s.id]})), ...loadLocal()]
@@ -161,6 +177,7 @@ function card(it, now, extraCls){
     <div class="row1"><div class="dish">${esc(it.name)}</div><div class="chip ${cls}">${label}</div></div>
     <div class="times">Start <b>${fmt(s)}</b> · ${fmtDur(it.durMin)}${it.durMax>it.durMin?'–'+fmtDur(it.durMax):''} · Ready <b>${readyTxt}</b></div>
     ${it.note?`<div class="note">${esc(it.note)}</div>`:''}
+    ${recipeLine(it)}
     <div class="actions">${buttons(it)}</div>
   </div>`;
 }
@@ -199,6 +216,7 @@ function renderList(now){
       <div class="nextdish">${esc(next.name)}</div>
       <div class="times">Start <b>${fmt(dt(next))}</b> · Ready <b>${next.durMax>next.durMin ? fmt(dt(next,next.durMin))+' – '+fmt(dt(next,next.durMax)) : '~'+fmt(dt(next,next.durMin))}</b></div>
       ${next.note?`<div class="note">${esc(next.note)}</div>`:''}
+      ${recipeLine(next)}
       <div class="actions">${buttons(next)}</div>
     </div>`;
   } else {
@@ -256,7 +274,7 @@ document.getElementById('addForm').addEventListener('submit', e=>{
     id:'local-'+Date.now(),
     name:f.get('name').trim(), date:f.get('date'), start:f.get('start'),
     durMin:durMin, durMax: isNaN(durMaxRaw)||durMaxRaw<durMin ? durMin : durMaxRaw,
-    note:f.get('note').trim(), done:false, started:false
+    note:f.get('note').trim(), recipe:(f.get('recipe')||'').trim(), done:false, started:false
   });
   saveLocal(items); e.target.reset();
   document.querySelector('input[name="date"]').value='2026-11-26';
