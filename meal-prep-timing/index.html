@@ -49,24 +49,18 @@
   .foot{margin-top:22px; text-align:center; font-size:12.5px; color:var(--muted); line-height:1.5;}
   .del{color:#b0563a; border-color:#e5c4b8;}
 
-  /* ---- Schedule view: one lane per dish, time runs downward ---- */
-  .schedWrap{display:flex; align-items:stretch;}
-  .schedHours{position:relative; width:46px; flex:none;}
+  /* ---- Schedule view: dot-and-annotation timeline ---- */
+  .tlWrap{display:flex; align-items:stretch;}
+  .tlHours{position:relative; width:46px; flex:none;}
   .hourlabel{position:absolute; right:6px; font-size:12px; color:var(--muted); transform:translateY(-7px); white-space:nowrap;}
-  .schedScroll{overflow-x:auto; flex:1; -webkit-overflow-scrolling:touch; border:1px solid var(--line); border-radius:12px; background:var(--card);}
-  .sched{position:relative;}
-  .lanehead{position:absolute; top:0; text-align:center; font-size:13px; padding:8px 2px 6px; color:var(--ink); border-bottom:1px solid var(--line); border-left:1px dashed var(--line); background:var(--card); z-index:4; line-height:1.15;}
-  .hourline{position:absolute; left:0; right:0; border-top:1px dashed var(--line); z-index:0;}
-  .block{position:absolute; border-radius:9px; padding:5px 7px; overflow:hidden; border:1px solid var(--sage); background:#e6ebdd; color:var(--ink); z-index:2;}
-  .block .bname{font-size:12.5px; line-height:1.2;}
-  .block .btime{font-size:11px; color:#5c6b52; margin-top:1px;}
-  .block.ext{border-style:dashed; background:repeating-linear-gradient(45deg,#eef1e6,#eef1e6 6px,#e2e8d5 6px,#e2e8d5 12px); border-top:none; border-radius:0 0 9px 9px; z-index:1;}
-  .block.started{border-color:var(--clay); background:#fbe9d9;}
-  .block.started .btime{color:#9a6212;}
-  .block.finished{opacity:.45; border-color:#bbb; background:#e8e8e8;}
-  .block.finished .btime{color:#777;}
-  .nowline{position:absolute; left:0; right:0; border-top:2px solid var(--clay); z-index:5;}
-  .nowtag{position:absolute; left:4px; transform:translateY(-9px); background:var(--clay); color:#fff; font-size:10.5px; padding:2px 6px; border-radius:8px; z-index:6;}
+  .tlChart{position:relative; flex:1;}
+  #tlSvg{position:absolute; left:0; top:0; overflow:visible;}
+  .tlLabel{position:absolute; right:0; padding:1px 0;}
+  .tlLabel .lname{font-size:14px; line-height:1.25;}
+  .tlLabel .lsub{font-size:12px; color:var(--muted); margin-top:1px;}
+  .tlLabel .ldish{font-weight:bold;}
+  .tlLabel.fin{opacity:.5;}
+  .nowtag{position:absolute; background:var(--clay); color:#fff; font-size:10.5px; padding:2px 6px; border-radius:8px; z-index:6; transform:translateY(-9px);}
   .legend{font-size:12.5px; color:var(--muted); margin-top:12px; line-height:1.6;}
 </style>
 </head>
@@ -115,13 +109,15 @@
   </div>
 
   <div id="viewSched" style="display:none">
-    <div class="schedWrap">
-      <div class="schedHours" id="schedHours"></div>
-      <div class="schedScroll"><div class="sched" id="sched"></div></div>
+    <div class="tlWrap">
+      <div class="tlHours" id="tlHours"></div>
+      <div class="tlChart" id="tlChart">
+        <svg id="tlSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div id="tlLabels"></div>
+      </div>
     </div>
     <div class="legend">
-      One column per dish — steps in a column never overlap, and anything side by side at the same height is happening at the same time. Swipe sideways if your screen is narrow.<br>
-      Solid block = the step's run time. Striped tail = the "up to" end of a range (e.g. the rolls' rise). Orange = started, in process. Gray = finished. The red line is right now.
+      Every step is a dot on the line at its true start time, with a thin bar beside the line showing how long it runs (faded tail = the "up to" end of a range). When steps bunch up, their labels queue in order with a thin connector back to their dot — nothing overlaps. Colors match dishes; gray = finished. The red line is right now.
     </div>
   </div>
 </div>
@@ -251,74 +247,118 @@ function renderList(now){
     doneItems.length ? doneItems.map(i=>card(i,now,'donecard')).join('') : '<div class="empty">Nothing finished yet.</div>';
 }
 
-/* ---------- Schedule view: one lane per dish ---------- */
+/* ---------- Schedule view: dot-and-annotation timeline ---------- */
 const DAY_START = 9*60;        // 9:00 AM, minutes since midnight
 const DAY_END   = 17*60 + 30;  // 5:30 PM
 const PXMIN = 1.15;            // pixels per minute
-const HEAD_H = 34;             // dish header row height
-const LANE_W = 118;            // pixels per dish lane
+const LINE_X = 84;             // x of the main timeline line, px
+const LABEL_X = 100;           // x where annotation text starts, px
+const LABEL_GAP = 42;          // minimum vertical space per annotation, px
+const DISH_COLORS = ['#7d8c6f','#c96f4a','#d9a441','#6f87a8','#9a7ba8','#5f9a8f','#b0563a','#8a7a63'];
 function minsOfDay(d){ return d.getHours()*60 + d.getMinutes(); }
 
 function renderSched(now){
-  const el = document.getElementById('sched');
-  const hoursEl = document.getElementById('schedHours');
+  const chart = document.getElementById('tlChart');
+  const svg = document.getElementById('tlSvg');
+  const labelsEl = document.getElementById('tlLabels');
+  const hoursEl = document.getElementById('tlHours');
   const items = allItems().filter(i=> i.date==='2026-11-26');
-  const H = (DAY_END-DAY_START)*PXMIN + HEAD_H;
+  const W = chart.clientWidth || 320;
+  const chartH = (DAY_END-DAY_START)*PXMIN;
 
-  // Dish lanes, in the order dishes first appear on the board
+  // Dish colors, assigned in board order
   const dishes = [];
   for(const it of items){ const d = it.dish || it.name; if(!dishes.includes(d)) dishes.push(d); }
-  const laneOf = d => dishes.indexOf(d);
-  el.style.width = (dishes.length * LANE_W) + 'px';
-  el.style.height = H + 'px';
-  hoursEl.style.height = H + 'px';
+  const colorOf = d => DISH_COLORS[dishes.indexOf(d) % DISH_COLORS.length];
 
-  let hoursHtml = '';
-  let html = '';
+  // True-time geometry per item
+  const placed = items.map(it=>({
+    it,
+    s: minsOfDay(dt(it)),
+    eMin: minsOfDay(dt(it, it.durMin)),
+    eMax: minsOfDay(dt(it, it.durMax)),
+    y: (minsOfDay(dt(it))-DAY_START)*PXMIN
+  }));
 
-  // Hour labels (fixed column outside the scroll area) + gridlines (inside)
-  for(let m = Math.ceil(DAY_START/60)*60; m <= DAY_END; m += 60){
-    const y = (m-DAY_START)*PXMIN + HEAD_H;
-    const lbl = fmt(new Date(2026,10,26, Math.floor(m/60), m%60));
-    hoursHtml += `<div class="hourlabel" style="top:${y}px">${lbl}</div>`;
-    html += `<div class="hourline" style="top:${y}px"></div>`;
+  // Pack duration bars into mini-tracks left of the line (bars may overlap in time)
+  const tracks = [];
+  for(const p of placed){
+    let t = tracks.findIndex(end => p.s >= end);
+    if(t === -1){ t = tracks.length; tracks.push(0); }
+    tracks[t] = p.eMax;
+    p.track = t;
   }
 
-  // Lane headers + separators
-  dishes.forEach((d, i)=>{
-    html += `<div class="lanehead" style="left:${i*LANE_W}px; width:${LANE_W}px; height:${HEAD_H}px">${esc(d)}</div>`;
-  });
+  // Spread annotations: true position, but never closer than LABEL_GAP
+  let cursor = 0;
+  for(const p of placed){
+    p.labelY = Math.max(p.y - 6, cursor);
+    cursor = p.labelY + LABEL_GAP;
+  }
+  const totalH = Math.max(chartH, cursor + 8);
 
-  // Blocks: a dish's own steps are sequential, so a lane never overlaps itself
-  for(const it of items){
-    const lane = laneOf(it.dish || it.name);
-    const s = minsOfDay(dt(it)), eMin = minsOfDay(dt(it, it.durMin)), eMax = minsOfDay(dt(it, it.durMax));
-    const top = (s-DAY_START)*PXMIN + HEAD_H;
-    const hMin = Math.max((eMin-s)*PXMIN, 34);
-    const left = (lane*LANE_W + 4) + 'px';
-    const width = (LANE_W - 8) + 'px';
-    const stateCls = it.done ? 'finished' : (it.started ? 'started' : '');
-    const range = it.durMax > it.durMin ? `–${fmt(dt(it, it.durMax))}` : '';
-    html += `<div class="block ${stateCls}" style="top:${top}px; height:${hMin}px; left:${left}; width:${width}">
-      <div class="bname">${esc(it.short || it.name)}</div>
-      <div class="btime">${fmt(dt(it))} – ${fmt(dt(it, it.durMin))}${range}</div>
-    </div>`;
-    if(eMax > eMin){
-      const extTop = (eMin-DAY_START)*PXMIN + HEAD_H;
-      const extH = Math.max((eMax-eMin)*PXMIN, 8);
-      html += `<div class="block ext ${stateCls}" style="top:${extTop}px; height:${extH}px; left:${left}; width:${width}"></div>`;
+  chart.style.height = totalH + 'px';
+  hoursEl.style.height = totalH + 'px';
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', totalH);
+  svg.setAttribute('viewBox', `0 0 ${W} ${totalH}`);
+
+  let g = '';
+  // Hour gridlines
+  let hoursHtml = '';
+  for(let m = Math.ceil(DAY_START/60)*60; m <= DAY_END; m += 60){
+    const y = (m-DAY_START)*PXMIN;
+    g += `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#e7dcc8" stroke-dasharray="3 3"/>`;
+    hoursHtml += `<div class="hourlabel" style="top:${y}px">${fmt(new Date(2026,10,26, Math.floor(m/60), m%60))}</div>`;
+  }
+  // Main line
+  g += `<line x1="${LINE_X}" y1="0" x2="${LINE_X}" y2="${chartH}" stroke="#d8cbb2" stroke-width="2"/>`;
+
+  // Duration bars + range tails
+  for(const p of placed){
+    const col = p.it.done ? '#bbbbbb' : colorOf(p.it.dish || p.it.name);
+    const bx = LINE_X - 12 - p.track*8;
+    const y1 = p.y, y2 = (p.eMin-DAY_START)*PXMIN, y3 = (p.eMax-DAY_START)*PXMIN;
+    if(y3 > y2) g += `<rect x="${bx}" y="${y2}" width="5" height="${Math.max(y3-y2,3)}" rx="2" fill="${col}" fill-opacity="0.28"/>`;
+    g += `<rect x="${bx}" y="${y1}" width="5" height="${Math.max(y2-y1,4)}" rx="2" fill="${col}" fill-opacity="0.85"/>`;
+  }
+
+  // Connectors for displaced labels, then dots
+  for(const p of placed){
+    const col = p.it.done ? '#bbbbbb' : colorOf(p.it.dish || p.it.name);
+    if(p.labelY > p.y + 2){
+      g += `<polyline points="${LINE_X},${p.y} ${LABEL_X-8},${p.y} ${LABEL_X-8},${p.labelY+9}" fill="none" stroke="${col}" stroke-width="1" stroke-opacity="0.55"/>`;
+    } else {
+      g += `<line x1="${LINE_X}" y1="${p.y}" x2="${LABEL_X-4}" y2="${p.y}" stroke="${col}" stroke-width="1" stroke-opacity="0.55"/>`;
     }
+  }
+  for(const p of placed){
+    const col = p.it.done ? '#bbbbbb' : colorOf(p.it.dish || p.it.name);
+    const ring = p.it.started && !p.it.done ? `stroke="#c96f4a" stroke-width="2.5"` : `stroke="#faf5ec" stroke-width="1.5"`;
+    g += `<circle cx="${LINE_X}" cy="${p.y}" r="5.5" fill="${col}" ${ring}/>`;
   }
 
   // Now line
   const nm = minsOfDay(now);
+  let nowTag = '';
   if(now.getDate()===26 && nm >= DAY_START && nm <= DAY_END){
-    const y = (nm-DAY_START)*PXMIN + HEAD_H;
-    html += `<div class="nowline" style="top:${y}px"></div><div class="nowtag" style="top:${y}px">now ${fmt(now)}</div>`;
+    const y = (nm-DAY_START)*PXMIN;
+    g += `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#c96f4a" stroke-width="2"/>`;
+    nowTag = `<div class="nowtag" style="left:0; top:${y}px">now ${fmt(now)}</div>`;
   }
-
+  svg.innerHTML = g;
   hoursEl.innerHTML = hoursHtml;
-  el.innerHTML = html;
+
+  // Annotation labels
+  labelsEl.innerHTML = placed.map(p=>{
+    const dish = p.it.dish || p.it.name;
+    const col = colorOf(dish);
+    const range = p.it.durMax > p.it.durMin ? `–${fmt(dt(p.it, p.it.durMax))}` : '';
+    return `<div class="tlLabel ${p.it.done?'fin':''}" style="left:${LABEL_X}px; top:${p.labelY}px">
+      <div class="lname">${esc(p.it.name)}</div>
+      <div class="lsub"><span class="ldish" style="color:${p.it.done?'#999':col}">${esc(dish)}</span> · ${fmt(dt(p.it))} – ${fmt(dt(p.it, p.it.durMin))}${range}${p.it.started && !p.it.done ? ' · in process' : ''}${p.it.done ? ' · finished' : ''}</div>
+    </div>`;
+  }).join('') + nowTag;
 }
 
 function render(){
