@@ -152,12 +152,28 @@ function render(){
   const active = items.filter(i=>!i.done);
   const doneItems = items.filter(i=>i.done);
 
-  // NEXT STEP: earliest not-done item whose start has arrived (do it now);
-  // otherwise the soonest upcoming item.
+  // NEXT STEP: the next moment anyone needs to DO something.
+  // - An item past its ready time and not marked done: do it now (check it).
+  // - A pending item: its start time.
+  // - An item in process: the moment it's ready (its earliest ready time).
+  // The featured item ALSO stays in its section below — the spotlight is a copy.
   let next=null, nextWhen='';
-  const due = active.filter(i=> dt(i) <= now);
-  if(due.length){ next = due[0]; nextWhen = dt(next, next.durMax) < now ? 'Should be finished by now — check it' : 'Now'; }
-  else if(active.length){ next = active[0]; nextWhen = 'At '+fmt(dt(next)); }
+  const overdue = active.filter(i=> dt(i, i.durMax) < now)
+    .sort((a,b)=> dt(a,a.durMax)-dt(b,b.durMax));
+  if(overdue.length){
+    next = overdue[0];
+    nextWhen = 'Now — should be finished, check it';
+  } else if(active.length){
+    let best=null, bestTime=null, bestKind='';
+    for(const i of active){
+      let t, kind;
+      if(dt(i) > now){ t = dt(i); kind='start'; }
+      else { t = dt(i, i.durMin); kind='ready'; }
+      if(bestTime===null || t < bestTime){ best=i; bestTime=t; bestKind=kind; }
+    }
+    next = best;
+    nextWhen = bestKind==='start' ? 'At '+fmt(bestTime) : 'At '+fmt(bestTime)+' — ready to check';
+  }
 
   const nextEl=document.getElementById('next');
   if(next){
@@ -172,13 +188,13 @@ function render(){
     nextEl.innerHTML = '<div class="empty">Everything\u2019s done. Time to eat. 🦃</div>';
   }
 
-  // IN PROCESS: started, not finished, not the featured next step.
-  const inProc = active.filter(i=> i!==next && dt(i) <= now && now < dt(i, i.durMax));
+  // IN PROCESS: anything started and not yet marked done (the featured item stays listed too).
+  const inProc = active.filter(i=> dt(i) <= now);
   document.getElementById('inprocess').innerHTML =
     inProc.length ? inProc.map(i=>card(i,now)).join('') : '<div class="empty">Nothing cooking right now.</div>';
 
-  // UP NEXT: everything not started yet (except the featured next step), in time order.
-  const pending = active.filter(i=> i!==next && dt(i) > now);
+  // UP NEXT: everything not started yet, in time order.
+  const pending = active.filter(i=> dt(i) > now);
   document.getElementById('pending').innerHTML =
     pending.length ? pending.map(i=>card(i,now)).join('') : '<div class="empty">Nothing waiting after this.</div>';
 
