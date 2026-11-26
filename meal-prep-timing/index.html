@@ -24,13 +24,14 @@
   .dish{font-size:18px;}
   .chip{font-size:11px; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:20px; white-space:nowrap;}
   .chip.wait{background:#efe9db; color:var(--muted);}
+  .chip.due{background:#f3d9c8; color:#9a4a1e;}
   .chip.going{background:#f6e3c8; color:#9a6212;}
   .chip.ready{background:#dde5d2; color:#4c603c;}
   .chip.done{background:#e3e3e3; color:#777;}
   .times{margin-top:6px; font-size:14.5px;}
   .times b{color:var(--clay); font-weight:normal;}
   .note{margin-top:3px; font-size:13.5px; color:var(--muted); font-style:italic;}
-  .actions{margin-top:10px; display:flex; gap:8px;}
+  .actions{margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;}
   button{font-family:inherit; font-size:13.5px; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:9px; padding:6px 12px; cursor:pointer;}
   button.primary{background:var(--sage); border-color:var(--sage); color:#fff;}
   button:active{transform:scale(.97);}
@@ -55,13 +56,13 @@
   <h2>Next step</h2>
   <div id="next"></div>
 
-  <h2>In process</h2>
+  <h2>In process — started, still going</h2>
   <div id="inprocess"></div>
 
-  <h2>Up next</h2>
+  <h2>Up next — not started yet</h2>
   <div id="pending"></div>
 
-  <h2>Done</h2>
+  <h2>Done — finished steps</h2>
   <div id="done"></div>
 
   <details class="addbox">
@@ -81,32 +82,32 @@
     </form>
   </details>
 
-  <div class="foot">Shared board baked in for today. Anything you add here is saved<br>on this device only — it won't sync to other phones.</div>
+  <div class="foot">Tap <b>▶ Start</b> when you begin a step — it moves to In process.<br>Tap <b>✓ Mark finished</b> only when the step is completely done.<br>Anything you add here is saved on this device only.</div>
 </div>
 
 <script>
 const SEED = [
-  {id:'seed-rolls', name:'Rolls — set out to rise', date:'2026-11-26', start:'09:30', durMin:180, durMax:300, note:'Set out at 9:30 to rise (3–5 hours)', done:false},
-  {id:'seed-sweet', name:'Sweet potatoes — in the oven', date:'2026-11-26', start:'09:45', durMin:60, durMax:60, note:'In the oven at 9:45 · about an hour (per Mel)', done:false},
-  {id:'seed-bake', name:'Rolls — bake', date:'2026-11-26', start:'12:30', durMin:15, durMax:140, note:'Bake 15–20 min after they finish rising. Start slides with the rise (ends 12:30–2:30 PM), so baked by ~12:45–2:50 PM', done:false},
-  {id:'seed-chix-prep', name:'Chicken Au Poivre — prep', date:'2026-11-26', start:'14:40', durMin:20, durMax:20, note:'Spatchcock & season (Maldon + olive oil). Preheat oven to 375°F convection. Crush peppercorns; whisk cream with rosemary, garlic, shallots + 1 tsp Maldon', done:false},
-  {id:'seed-chix-p1', name:'Chicken — roast, phase 1', date:'2026-11-26', start:'15:00', durMin:15, durMax:15, note:'Skin side up at 375°F convection, ~15 min, until slightly golden', done:false},
-  {id:'seed-chix-p2', name:'Chicken — sauce on, roast phase 2', date:'2026-11-26', start:'15:15', durMin:30, durMax:35, note:'Pour peppercorn sauce over, add sherry around the chicken, raise oven to 400°F. Done at 165°F in the thickest part of the breast', done:false},
-  {id:'seed-baste1', name:'Baste the chicken (1 of 2)', date:'2026-11-26', start:'15:30', durMin:1, durMax:1, note:'Quick baste, back in the oven', done:false},
-  {id:'seed-baste2', name:'Baste the chicken (2 of 2)', date:'2026-11-26', start:'15:45', durMin:1, durMax:1, note:'Second baste — good moment to check the temp', done:false},
-  {id:'seed-chix-rest', name:'Chicken — rest', date:'2026-11-26', start:'15:50', durMin:10, durMax:10, note:'Rest at least 10 min before serving. Serve ~4:00 PM', done:false},
-  {id:'seed-stuff-boil', name:'Stuffing — boil water & butter', date:'2026-11-26', start:'15:45', durMin:5, durMax:5, note:'365 Organic Traditional Stuffing Mix: 1¾ cups water + 6 Tbsp butter in a large saucepan, bring to a boil over medium-high', done:false},
-  {id:'seed-stuff-stand', name:'Stuffing — mix, stand & fluff', date:'2026-11-26', start:'15:50', durMin:5, durMax:5, note:'Off the heat, stir in the stuffing mix, cover and let stand 5 min. Fluff with a fork and serve — holds covered until the chicken is ready at 4:00', done:false},
-  {id:'seed-beans-roast', name:'Green beans — prep & roast', date:'2026-11-26', start:'15:20', durMin:25, durMax:30, note:'From frozen, do NOT thaw. Spread in a single layer on a sheet pan, toss with olive oil, salt, pepper & garlic powder. Roast at 400°F alongside the chicken — done when tender with browned, blistered spots', done:false},
-  {id:'seed-beans-toss', name:'Green beans — toss halfway', date:'2026-11-26', start:'15:35', durMin:1, durMax:1, note:'Toss/flip the beans so they brown evenly, back in the oven', done:false},
-  {id:'seed-blond-prep', name:'Blondies — prep & pan', date:'2026-11-26', start:'15:55', durMin:10, durMax:10, note:'Maple Butterscotch Blondies. Once the chicken is out, set the oven to 350°F (it coasts down from 400). Line an 8×8 pan with parchment, grease lightly. Melt 1 stick (4 oz) unsalted butter, whisk with 1 large egg, stir in the dry mix to a soft dough. Spread in pan, squeeze 7–8 lines of butterscotch syrup ~1 inch apart, drag a knife through in alternating directions', done:false},
-  {id:'seed-blond-bake', name:'Blondies — bake', date:'2026-11-26', start:'16:05', durMin:20, durMax:22, note:'Center rack at 350°F until golden brown. Cool on a wire rack — dessert while/after you eat', done:false}
+  {id:'seed-rolls', name:'Rolls — set out to rise', date:'2026-11-26', start:'09:30', durMin:180, durMax:300, note:'Set out at 9:30 to rise (3–5 hours)'},
+  {id:'seed-sweet', name:'Sweet potatoes — in the oven', date:'2026-11-26', start:'09:45', durMin:60, durMax:60, note:'In the oven at 9:45 · about an hour (per Mel)'},
+  {id:'seed-bake', name:'Rolls — bake', date:'2026-11-26', start:'12:30', durMin:15, durMax:140, note:'Bake 15–20 min after they finish rising. Start slides with the rise (ends 12:30–2:30 PM), so baked by ~12:45–2:50 PM'},
+  {id:'seed-chix-prep', name:'Chicken Au Poivre — prep', date:'2026-11-26', start:'14:40', durMin:20, durMax:20, note:'Spatchcock & season (Maldon + olive oil). Preheat oven to 375°F convection. Crush peppercorns; whisk cream with rosemary, garlic, shallots + 1 tsp Maldon'},
+  {id:'seed-chix-p1', name:'Chicken — roast, phase 1', date:'2026-11-26', start:'15:00', durMin:15, durMax:15, note:'Skin side up at 375°F convection, ~15 min, until slightly golden'},
+  {id:'seed-chix-p2', name:'Chicken — sauce on, roast phase 2', date:'2026-11-26', start:'15:15', durMin:30, durMax:35, note:'Pour peppercorn sauce over, add sherry around the chicken, raise oven to 400°F. Done at 165°F in the thickest part of the breast'},
+  {id:'seed-baste1', name:'Baste the chicken (1 of 2)', date:'2026-11-26', start:'15:30', durMin:1, durMax:1, note:'Quick baste, back in the oven'},
+  {id:'seed-baste2', name:'Baste the chicken (2 of 2)', date:'2026-11-26', start:'15:45', durMin:1, durMax:1, note:'Second baste — good moment to check the temp'},
+  {id:'seed-chix-rest', name:'Chicken — rest', date:'2026-11-26', start:'15:50', durMin:10, durMax:10, note:'Rest at least 10 min before serving. Serve ~4:00 PM'},
+  {id:'seed-stuff-boil', name:'Stuffing — boil water & butter', date:'2026-11-26', start:'15:45', durMin:5, durMax:5, note:'365 Organic Traditional Stuffing Mix: 1¾ cups water + 6 Tbsp butter in a large saucepan, bring to a boil over medium-high'},
+  {id:'seed-stuff-stand', name:'Stuffing — mix, stand & fluff', date:'2026-11-26', start:'15:50', durMin:5, durMax:5, note:'Off the heat, stir in the stuffing mix, cover and let stand 5 min. Fluff with a fork and serve — holds covered until the chicken is ready at 4:00'},
+  {id:'seed-beans-roast', name:'Green beans — prep & roast', date:'2026-11-26', start:'15:20', durMin:25, durMax:30, note:'From frozen, do NOT thaw. Spread in a single layer on a sheet pan, toss with olive oil, salt, pepper & garlic powder. Roast at 400°F alongside the chicken — done when tender with browned, blistered spots'},
+  {id:'seed-beans-toss', name:'Green beans — toss halfway', date:'2026-11-26', start:'15:35', durMin:1, durMax:1, note:'Toss/flip the beans so they brown evenly, back in the oven'},
+  {id:'seed-blond-prep', name:'Blondies — prep & pan', date:'2026-11-26', start:'15:55', durMin:10, durMax:10, note:'Maple Butterscotch Blondies. Once the chicken is out, set the oven to 350°F (it coasts down from 400). Line an 8×8 pan with parchment, grease lightly. Melt 1 stick (4 oz) unsalted butter, whisk with 1 large egg, stir in the dry mix to a soft dough. Spread in pan, squeeze 7–8 lines of butterscotch syrup ~1 inch apart, drag a knife through in alternating directions'},
+  {id:'seed-blond-bake', name:'Blondies — bake', date:'2026-11-26', start:'16:05', durMin:20, durMax:22, note:'Center rack at 350°F until golden brown. Cool on a wire rack — dessert while/after you eat'}
 ];
-const KEY='mealprep-items-v1', DKEY='mealprep-done-v1';
+const KEY='mealprep-items-v1', DKEY='mealprep-done-v1', SKEY='mealprep-started-v1';
 function loadLocal(){ try{ return JSON.parse(localStorage.getItem(KEY))||[] }catch(e){ return [] } }
-function loadDone(){ try{ return JSON.parse(localStorage.getItem(DKEY))||{} }catch(e){ return {} } }
+function loadMap(k){ try{ return JSON.parse(localStorage.getItem(k))||{} }catch(e){ return {} } }
 function saveLocal(v){ localStorage.setItem(KEY, JSON.stringify(v)); }
-function saveDone(v){ localStorage.setItem(DKEY, JSON.stringify(v)); }
+function saveMap(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
 
 function dt(item, mins){
   const d = new Date(item.date+'T'+item.start+':00');
@@ -121,24 +122,33 @@ function fmtDur(m){
 }
 function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+function buttons(it){
+  if(it.done) return `<button onclick="toggleDone('${it.id}')">↩ Not finished after all</button>`;
+  let b='';
+  if(!it.started) b += `<button class="primary" onclick="toggleStart('${it.id}')">▶ Start this step</button>`;
+  else b += `<button onclick="toggleStart('${it.id}')">↩ Not started</button>`;
+  b += `<button onclick="toggleDone('${it.id}')">✓ Mark finished</button>`;
+  if(!it.id.startsWith('seed-')) b += `<button class="del" onclick="removeItem('${it.id}')">Remove</button>`;
+  return b;
+}
+
 function card(it, now, extraCls){
   const s=dt(it), e1=dt(it,it.durMin), e2=dt(it,it.durMax);
   let cls,label;
-  if(it.done){ cls='done'; label='Done'; }
-  else if(now < s){ cls='wait'; label='Starts '+fmt(s); }
-  else if(now < e1){ cls='going'; label='Going · ready '+fmt(e1)+(it.durMax>it.durMin?'–'+fmt(e2):''); }
-  else if(now <= e2){ cls='ready'; label='In the ready window'; }
-  else { cls='ready'; label='Ready since '+fmt(e2); }
+  if(it.done){ cls='done'; label='Finished'; }
+  else if(it.started){
+    if(now < e1){ cls='going'; label='Going · ready '+fmt(e1)+(it.durMax>it.durMin?'–'+fmt(e2):''); }
+    else if(now <= e2){ cls='ready'; label='In the ready window'; }
+    else { cls='ready'; label='Ready since '+fmt(e2); }
+  }
+  else if(now >= s){ cls='due'; label='Time to start'; }
+  else { cls='wait'; label='Starts '+fmt(s); }
   const readyTxt = it.durMax>it.durMin ? fmt(e1)+' – '+fmt(e2) : '~'+fmt(e1);
-  const local = !it.id.startsWith('seed-');
   return `<div class="card ${extraCls||''}">
     <div class="row1"><div class="dish">${esc(it.name)}</div><div class="chip ${cls}">${label}</div></div>
     <div class="times">Start <b>${fmt(s)}</b> · ${fmtDur(it.durMin)}${it.durMax>it.durMin?'–'+fmtDur(it.durMax):''} · Ready <b>${readyTxt}</b></div>
     ${it.note?`<div class="note">${esc(it.note)}</div>`:''}
-    <div class="actions">
-      <button onclick="toggleDone('${it.id}')">${it.done?'↩ Not done':'✓ Mark done'}</button>
-      ${local?`<button class="del" onclick="removeItem('${it.id}')">Remove</button>`:''}
-    </div>
+    <div class="actions">${buttons(it)}</div>
   </div>`;
 }
 
@@ -146,33 +156,33 @@ function render(){
   const now=new Date();
   document.getElementById('now').textContent =
     'It\u2019s '+ now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) +' now';
-  const doneMap=loadDone();
-  const items=[...SEED.map(s=>({...s, done: !!doneMap[s.id]})), ...loadLocal()]
+  const doneMap=loadMap(DKEY), startMap=loadMap(SKEY);
+  const items=[...SEED.map(s=>({...s, done: !!doneMap[s.id], started: !!startMap[s.id]})), ...loadLocal()]
     .sort((a,b)=> dt(a)-dt(b) || a.name.localeCompare(b.name));
   const active = items.filter(i=>!i.done);
   const doneItems = items.filter(i=>i.done);
 
   // NEXT STEP: the next moment anyone needs to DO something.
-  // - An item past its ready time and not marked done: do it now (check it).
-  // - A pending item: its start time.
-  // - An item in process: the moment it's ready (its earliest ready time).
-  // The featured item ALSO stays in its section below — the spotlight is a copy.
   let next=null, nextWhen='';
-  const overdue = active.filter(i=> dt(i, i.durMax) < now)
+  const overdue = active.filter(i=> i.started && dt(i, i.durMax) < now)
     .sort((a,b)=> dt(a,a.durMax)-dt(b,b.durMax));
+  const dueToStart = active.filter(i=> !i.started && dt(i) <= now);
   if(overdue.length){
     next = overdue[0];
     nextWhen = 'Now — should be finished, check it';
+  } else if(dueToStart.length){
+    next = dueToStart[0];
+    nextWhen = 'Now — time to start this';
   } else if(active.length){
     let best=null, bestTime=null, bestKind='';
     for(const i of active){
       let t, kind;
-      if(dt(i) > now){ t = dt(i); kind='start'; }
+      if(!i.started){ t = dt(i); kind='start'; }
       else { t = dt(i, i.durMin); kind='ready'; }
       if(bestTime===null || t < bestTime){ best=i; bestTime=t; bestKind=kind; }
     }
     next = best;
-    nextWhen = bestKind==='start' ? 'At '+fmt(bestTime) : 'At '+fmt(bestTime)+' — ready to check';
+    nextWhen = bestKind==='start' ? 'At '+fmt(bestTime)+' — start this step' : 'At '+fmt(bestTime)+' — ready to check';
   }
 
   const nextEl=document.getElementById('next');
@@ -182,29 +192,38 @@ function render(){
       <div class="nextdish">${esc(next.name)}</div>
       <div class="times">Start <b>${fmt(dt(next))}</b> · Ready <b>${next.durMax>next.durMin ? fmt(dt(next,next.durMin))+' – '+fmt(dt(next,next.durMax)) : '~'+fmt(dt(next,next.durMin))}</b></div>
       ${next.note?`<div class="note">${esc(next.note)}</div>`:''}
-      <div class="actions"><button class="primary" onclick="toggleDone('${next.id}')">✓ Mark done</button></div>
+      <div class="actions">${buttons(next)}</div>
     </div>`;
   } else {
-    nextEl.innerHTML = '<div class="empty">Everything\u2019s done. Time to eat. 🦃</div>';
+    nextEl.innerHTML = '<div class="empty">Everything\u2019s finished. Time to eat. 🦃</div>';
   }
 
-  // IN PROCESS: anything started and not yet marked done (the featured item stays listed too).
-  const inProc = active.filter(i=> dt(i) <= now);
+  // IN PROCESS: steps someone has started and not yet finished.
+  const inProc = active.filter(i=> i.started);
   document.getElementById('inprocess').innerHTML =
-    inProc.length ? inProc.map(i=>card(i,now)).join('') : '<div class="empty">Nothing cooking right now.</div>';
+    inProc.length ? inProc.map(i=>card(i,now)).join('') : '<div class="empty">Nothing started right now — tap ▶ Start on a step when you begin it.</div>';
 
-  // UP NEXT: everything not started yet, in time order.
-  const pending = active.filter(i=> dt(i) > now);
+  // UP NEXT: not started yet, in time order.
+  const pending = active.filter(i=> !i.started);
   document.getElementById('pending').innerHTML =
-    pending.length ? pending.map(i=>card(i,now)).join('') : '<div class="empty">Nothing waiting after this.</div>';
+    pending.length ? pending.map(i=>card(i,now)).join('') : '<div class="empty">Nothing waiting to be started.</div>';
 
   document.getElementById('done').innerHTML =
     doneItems.length ? doneItems.map(i=>card(i,now,'donecard')).join('') : '<div class="empty">Nothing finished yet.</div>';
 }
 
+function toggleStart(id){
+  if(id.startsWith('seed-')){
+    const m=loadMap(SKEY); m[id]=!m[id]; saveMap(SKEY,m);
+  } else {
+    const items=loadLocal(); const it=items.find(x=>x.id===id);
+    if(it){ it.started=!it.started; saveLocal(items); }
+  }
+  render();
+}
 function toggleDone(id){
   if(id.startsWith('seed-')){
-    const d=loadDone(); d[id]=!d[id]; saveDone(d);
+    const m=loadMap(DKEY); m[id]=!m[id]; saveMap(DKEY,m);
   } else {
     const items=loadLocal(); const it=items.find(x=>x.id===id);
     if(it){ it.done=!it.done; saveLocal(items); }
@@ -224,7 +243,7 @@ document.getElementById('addForm').addEventListener('submit', e=>{
     id:'local-'+Date.now(),
     name:f.get('name').trim(), date:f.get('date'), start:f.get('start'),
     durMin:durMin, durMax: isNaN(durMaxRaw)||durMaxRaw<durMin ? durMin : durMaxRaw,
-    note:f.get('note').trim(), done:false
+    note:f.get('note').trim(), done:false, started:false
   });
   saveLocal(items); e.target.reset();
   document.querySelector('input[name="date"]').value='2026-11-26';
