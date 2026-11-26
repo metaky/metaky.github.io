@@ -98,7 +98,9 @@ const SEED = [
   {id:'seed-stuff-boil', name:'Stuffing — boil water & butter', date:'2026-11-26', start:'15:45', durMin:5, durMax:5, note:'365 Organic Traditional Stuffing Mix: 1¾ cups water + 6 Tbsp butter in a large saucepan, bring to a boil over medium-high', done:false},
   {id:'seed-stuff-stand', name:'Stuffing — mix, stand & fluff', date:'2026-11-26', start:'15:50', durMin:5, durMax:5, note:'Off the heat, stir in the stuffing mix, cover and let stand 5 min. Fluff with a fork and serve — holds covered until the chicken is ready at 4:00', done:false},
   {id:'seed-beans-roast', name:'Green beans — prep & roast', date:'2026-11-26', start:'15:20', durMin:25, durMax:30, note:'From frozen, do NOT thaw. Spread in a single layer on a sheet pan, toss with olive oil, salt, pepper & garlic powder. Roast at 400°F alongside the chicken — done when tender with browned, blistered spots', done:false},
-  {id:'seed-beans-toss', name:'Green beans — toss halfway', date:'2026-11-26', start:'15:35', durMin:1, durMax:1, note:'Toss/flip the beans so they brown evenly, back in the oven', done:false}
+  {id:'seed-beans-toss', name:'Green beans — toss halfway', date:'2026-11-26', start:'15:35', durMin:1, durMax:1, note:'Toss/flip the beans so they brown evenly, back in the oven', done:false},
+  {id:'seed-blond-prep', name:'Blondies — prep & pan', date:'2026-11-26', start:'15:55', durMin:10, durMax:10, note:'Maple Butterscotch Blondies. Once the chicken is out, set the oven to 350°F (it coasts down from 400). Line an 8×8 pan with parchment, grease lightly. Melt 1 stick (4 oz) unsalted butter, whisk with 1 large egg, stir in the dry mix to a soft dough. Spread in pan, squeeze 7–8 lines of butterscotch syrup ~1 inch apart, drag a knife through in alternating directions', done:false},
+  {id:'seed-blond-bake', name:'Blondies — bake', date:'2026-11-26', start:'16:05', durMin:20, durMax:22, note:'Center rack at 350°F until golden brown. Cool on a wire rack — dessert while/after you eat', done:false}
 ];
 const KEY='mealprep-items-v1', DKEY='mealprep-done-v1';
 function loadLocal(){ try{ return JSON.parse(localStorage.getItem(KEY))||[] }catch(e){ return [] } }
