@@ -14,7 +14,10 @@
   .wrap{max-width:560px; margin:0 auto;}
   h1{font-size:26px; font-weight:normal; text-align:center; margin-bottom:2px;}
   .sub{text-align:center; color:var(--muted); font-size:14px; margin-bottom:6px;}
-  .now{text-align:center; font-size:15px; color:var(--clay); margin-bottom:18px; min-height:20px;}
+  .now{text-align:center; font-size:15px; color:var(--clay); margin-bottom:14px; min-height:20px;}
+  .tabs{display:flex; gap:8px; justify-content:center; margin-bottom:18px;}
+  .tab{font-size:15px; padding:8px 22px; border-radius:20px; border:1px solid var(--line); background:#fff; color:var(--muted); cursor:pointer; font-family:inherit;}
+  .tab.on{background:var(--sage); border-color:var(--sage); color:#fff;}
   h2{font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:normal; margin:22px 0 10px;}
   .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:12px; box-shadow:0 1px 3px rgba(90,70,40,.06);}
   .nextcard{background:#fdf3e3; border:2px solid var(--clay); border-radius:16px; padding:18px; box-shadow:0 2px 8px rgba(160,90,40,.15);}
@@ -45,6 +48,22 @@
   .twocol{display:grid; grid-template-columns:1fr 1fr; gap:9px;}
   .foot{margin-top:22px; text-align:center; font-size:12.5px; color:var(--muted); line-height:1.5;}
   .del{color:#b0563a; border-color:#e5c4b8;}
+
+  /* ---- Schedule view ---- */
+  .sched{position:relative; margin-left:52px; border-left:1px solid var(--line);}
+  .hourline{position:absolute; left:-52px; right:0; border-top:1px dashed var(--line);}
+  .hourlabel{position:absolute; left:0; width:46px; text-align:right; font-size:12px; color:var(--muted); transform:translateY(-7px);}
+  .block{position:absolute; border-radius:9px; padding:5px 8px; overflow:hidden; border:1px solid var(--sage); background:#e6ebdd; color:var(--ink);}
+  .block .bname{font-size:13px; line-height:1.2;}
+  .block .btime{font-size:11px; color:#5c6b52; margin-top:1px;}
+  .block.ext{border-style:dashed; background:repeating-linear-gradient(45deg,#eef1e6,#eef1e6 6px,#e2e8d5 6px,#e2e8d5 12px); border-top:none; border-radius:0 0 9px 9px;}
+  .block.started{border-color:var(--clay); background:#fbe9d9;}
+  .block.started .btime{color:#9a6212;}
+  .block.finished{opacity:.45; border-color:#bbb; background:#e8e8e8;}
+  .block.finished .btime{color:#777;}
+  .nowline{position:absolute; left:-52px; right:0; border-top:2px solid var(--clay); z-index:5;}
+  .nowtag{position:absolute; left:-52px; transform:translateY(-8px); background:var(--clay); color:#fff; font-size:10.5px; padding:2px 6px; border-radius:8px; z-index:6;}
+  .legend{font-size:12.5px; color:var(--muted); margin-top:12px; line-height:1.6;}
 </style>
 </head>
 <body>
@@ -53,36 +72,51 @@
   <div class="sub">Thanksgiving — Thursday, Nov 26, 2026</div>
   <div class="now" id="now"></div>
 
-  <h2>Next step</h2>
-  <div id="next"></div>
+  <div class="tabs">
+    <button class="tab on" id="tabList" onclick="showView('list')">List</button>
+    <button class="tab" id="tabSched" onclick="showView('sched')">Schedule</button>
+  </div>
 
-  <h2>In process — started, still going</h2>
-  <div id="inprocess"></div>
+  <div id="viewList">
+    <h2>Next step</h2>
+    <div id="next"></div>
 
-  <h2>Up next — not started yet</h2>
-  <div id="pending"></div>
+    <h2>In process — started, still going</h2>
+    <div id="inprocess"></div>
 
-  <h2>Done — finished steps</h2>
-  <div id="done"></div>
+    <h2>Up next — not started yet</h2>
+    <div id="pending"></div>
 
-  <details class="addbox">
-    <summary>＋ Add a dish</summary>
-    <form id="addForm">
-      <label>Dish name <input name="name" required placeholder="e.g. Turkey"></label>
-      <div class="twocol">
-        <label>Start time <input name="start" type="time" required></label>
-        <label>Date <input name="date" type="date" required></label>
-      </div>
-      <div class="twocol">
-        <label>Duration (minutes) <input name="durMin" type="number" min="1" required placeholder="60"></label>
-        <label>Up to (optional, for ranges) <input name="durMax" type="number" min="1" placeholder="300"></label>
-      </div>
-      <label>Note <input name="note" placeholder="e.g. needs to rise, in the oven…"></label>
-      <button class="primary" type="submit">Add to the board</button>
-    </form>
-  </details>
+    <h2>Done — finished steps</h2>
+    <div id="done"></div>
 
-  <div class="foot">Tap <b>▶ Start</b> when you begin a step — it moves to In process.<br>Tap <b>✓ Mark finished</b> only when the step is completely done.<br>Anything you add here is saved on this device only.</div>
+    <details class="addbox">
+      <summary>＋ Add a dish</summary>
+      <form id="addForm">
+        <label>Dish name <input name="name" required placeholder="e.g. Turkey"></label>
+        <div class="twocol">
+          <label>Start time <input name="start" type="time" required></label>
+          <label>Date <input name="date" type="date" required></label>
+        </div>
+        <div class="twocol">
+          <label>Duration (minutes) <input name="durMin" type="number" min="1" required placeholder="60"></label>
+          <label>Up to (optional, for ranges) <input name="durMax" type="number" min="1" placeholder="300"></label>
+        </div>
+        <label>Note <input name="note" placeholder="e.g. needs to rise, in the oven…"></label>
+        <button class="primary" type="submit">Add to the board</button>
+      </form>
+    </details>
+
+    <div class="foot">Tap <b>▶ Start</b> when you begin a step — it moves to In process.<br>Tap <b>✓ Mark finished</b> only when the step is completely done.<br>Anything you add here is saved on this device only.</div>
+  </div>
+
+  <div id="viewSched" style="display:none">
+    <div class="sched" id="sched"></div>
+    <div class="legend">
+      Solid block = the step's run time. Striped tail = the "up to" end of a range (e.g. the rolls' rise).<br>
+      Orange block = started, in process. Gray = finished. The red line is right now.
+    </div>
+  </div>
 </div>
 
 <script>
@@ -122,6 +156,12 @@ function fmtDur(m){
 }
 function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+function allItems(){
+  const doneMap=loadMap(DKEY), startMap=loadMap(SKEY);
+  return [...SEED.map(s=>({...s, done: !!doneMap[s.id], started: !!startMap[s.id]})), ...loadLocal()]
+    .sort((a,b)=> dt(a)-dt(b) || a.name.localeCompare(b.name));
+}
+
 function buttons(it){
   if(it.done) return `<button onclick="toggleDone('${it.id}')">↩ Not finished after all</button>`;
   let b='';
@@ -152,17 +192,11 @@ function card(it, now, extraCls){
   </div>`;
 }
 
-function render(){
-  const now=new Date();
-  document.getElementById('now').textContent =
-    'It\u2019s '+ now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) +' now';
-  const doneMap=loadMap(DKEY), startMap=loadMap(SKEY);
-  const items=[...SEED.map(s=>({...s, done: !!doneMap[s.id], started: !!startMap[s.id]})), ...loadLocal()]
-    .sort((a,b)=> dt(a)-dt(b) || a.name.localeCompare(b.name));
+function renderList(now){
+  const items = allItems();
   const active = items.filter(i=>!i.done);
   const doneItems = items.filter(i=>i.done);
 
-  // NEXT STEP: the next moment anyone needs to DO something.
   let next=null, nextWhen='';
   const overdue = active.filter(i=> i.started && dt(i, i.durMax) < now)
     .sort((a,b)=> dt(a,a.durMax)-dt(b,b.durMax));
@@ -198,18 +232,94 @@ function render(){
     nextEl.innerHTML = '<div class="empty">Everything\u2019s finished. Time to eat. 🦃</div>';
   }
 
-  // IN PROCESS: steps someone has started and not yet finished.
   const inProc = active.filter(i=> i.started);
   document.getElementById('inprocess').innerHTML =
     inProc.length ? inProc.map(i=>card(i,now)).join('') : '<div class="empty">Nothing started right now — tap ▶ Start on a step when you begin it.</div>';
 
-  // UP NEXT: not started yet, in time order.
   const pending = active.filter(i=> !i.started);
   document.getElementById('pending').innerHTML =
     pending.length ? pending.map(i=>card(i,now)).join('') : '<div class="empty">Nothing waiting to be started.</div>';
 
   document.getElementById('done').innerHTML =
     doneItems.length ? doneItems.map(i=>card(i,now,'donecard')).join('') : '<div class="empty">Nothing finished yet.</div>';
+}
+
+/* ---------- Schedule view ---------- */
+const DAY_START = 9*60;        // 9:00 AM, minutes since midnight
+const DAY_END   = 17*60 + 30;  // 5:30 PM
+const PXMIN = 1.15;            // pixels per minute
+function minsOfDay(d){ return d.getHours()*60 + d.getMinutes(); }
+
+function renderSched(now){
+  const el = document.getElementById('sched');
+  const items = allItems().filter(i=> i.date==='2026-11-26');
+  const H = (DAY_END-DAY_START)*PXMIN;
+  let html = '';
+
+  // Hour gridlines + labels
+  for(let m = Math.ceil(DAY_START/60)*60; m <= DAY_END; m += 60){
+    const y = (m-DAY_START)*PXMIN;
+    const lbl = fmt(new Date(2026,10,26, Math.floor(m/60), m%60));
+    html += `<div class="hourline" style="top:${y}px"></div><div class="hourlabel" style="top:${y}px">${lbl}</div>`;
+  }
+
+  // Lane packing so overlapping steps sit side by side
+  const lanes = []; // each lane: end-minute of its last block
+  const placed = items.map(it=>{
+    const s = minsOfDay(dt(it)), eMax = minsOfDay(dt(it, it.durMax));
+    let lane = lanes.findIndex(end => s >= end);
+    if(lane === -1){ lane = lanes.length; lanes.push(0); }
+    lanes[lane] = eMax;
+    return {it, s, eMin: minsOfDay(dt(it, it.durMin)), eMax, lane};
+  });
+  const nLanes = Math.max(lanes.length, 1);
+  const laneW = 100 / nLanes;
+
+  for(const p of placed){
+    const top = (p.s-DAY_START)*PXMIN;
+    const hMin = Math.max((p.eMin-p.s)*PXMIN, 30);
+    const left = `calc(${p.lane*laneW}% + 4px)`;
+    const width = `calc(${laneW}% - 8px)`;
+    const stateCls = p.it.done ? 'finished' : (p.it.started ? 'started' : '');
+    const range = p.it.durMax > p.it.durMin ? `–${fmt(dt(p.it, p.it.durMax))}` : '';
+    html += `<div class="block ${stateCls}" style="top:${top}px; height:${hMin}px; left:${left}; width:${width}; z-index:2">
+      <div class="bname">${esc(p.it.name)}</div>
+      <div class="btime">${fmt(dt(p.it))} – ${fmt(dt(p.it, p.it.durMin))}${range}</div>
+    </div>`;
+    if(p.eMax > p.eMin){
+      const extTop = (p.eMin-DAY_START)*PXMIN;
+      const extH = Math.max((p.eMax-p.eMin)*PXMIN, 8);
+      html += `<div class="block ext ${stateCls}" style="top:${extTop}px; height:${extH}px; left:${left}; width:${width}; z-index:1"></div>`;
+    }
+  }
+
+  // Now line
+  const nm = minsOfDay(now);
+  if(now.getDate()===26 && nm >= DAY_START && nm <= DAY_END){
+    const y = (nm-DAY_START)*PXMIN;
+    html += `<div class="nowline" style="top:${y}px"></div><div class="nowtag" style="top:${y}px">now ${fmt(now)}</div>`;
+  }
+
+  el.style.height = H+'px';
+  el.innerHTML = html;
+}
+
+function render(){
+  const now = new Date();
+  document.getElementById('now').textContent =
+    'It\u2019s '+ now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) +' now';
+  renderList(now);
+  renderSched(now);
+}
+
+let currentView = 'list';
+function showView(v){
+  currentView = v;
+  document.getElementById('viewList').style.display = v==='list' ? '' : 'none';
+  document.getElementById('viewSched').style.display = v==='sched' ? '' : 'none';
+  document.getElementById('tabList').classList.toggle('on', v==='list');
+  document.getElementById('tabSched').classList.toggle('on', v==='sched');
+  render();
 }
 
 function toggleStart(id){
