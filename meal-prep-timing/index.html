@@ -7,7 +7,7 @@
 <style>
   :root{
     --paper:#faf5ec; --card:#fffdf8; --ink:#3d3125; --muted:#8a7a63;
-    --clay:#c96f4a; --sage:#7d8c6f; --line:#e7dcc8; --gold:#e9b44c;
+    --clay:#c96f4a; --sage:#7d8c6f; --line:#e7dcc8;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{font-family:Georgia,'Times New Roman',serif; background:var(--paper); color:var(--ink); padding:20px 14px 48px;}
@@ -15,27 +15,32 @@
   h1{font-size:26px; font-weight:normal; text-align:center; margin-bottom:2px;}
   .sub{text-align:center; color:var(--muted); font-size:14px; margin-bottom:6px;}
   .now{text-align:center; font-size:15px; color:var(--clay); margin-bottom:18px; min-height:20px;}
+  h2{font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:normal; margin:22px 0 10px;}
   .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:12px; box-shadow:0 1px 3px rgba(90,70,40,.06);}
+  .nextcard{background:#fdf3e3; border:2px solid var(--clay); border-radius:16px; padding:18px; box-shadow:0 2px 8px rgba(160,90,40,.15);}
+  .nextlabel{font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--clay); margin-bottom:6px;}
+  .nextdish{font-size:23px; line-height:1.25;}
   .row1{display:flex; justify-content:space-between; align-items:baseline; gap:10px;}
-  .dish{font-size:19px;}
+  .dish{font-size:18px;}
   .chip{font-size:11px; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:20px; white-space:nowrap;}
   .chip.wait{background:#efe9db; color:var(--muted);}
   .chip.going{background:#f6e3c8; color:#9a6212;}
   .chip.ready{background:#dde5d2; color:#4c603c;}
   .chip.done{background:#e3e3e3; color:#777;}
-  .times{margin-top:6px; font-size:14.5px; color:var(--ink);}
+  .times{margin-top:6px; font-size:14.5px;}
   .times b{color:var(--clay); font-weight:normal;}
   .note{margin-top:3px; font-size:13.5px; color:var(--muted); font-style:italic;}
   .actions{margin-top:10px; display:flex; gap:8px;}
   button{font-family:inherit; font-size:13.5px; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:9px; padding:6px 12px; cursor:pointer;}
   button.primary{background:var(--sage); border-color:var(--sage); color:#fff;}
   button:active{transform:scale(.97);}
-  .empty{text-align:center; color:var(--muted); padding:28px 0; font-style:italic;}
-  details.addbox{margin-top:20px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 16px;}
+  .empty{color:var(--muted); font-style:italic; padding:4px 0 8px; font-size:14.5px;}
+  .donecard{opacity:.55;}
+  details.addbox{margin-top:24px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 16px;}
   summary{cursor:pointer; font-size:16px;}
   form{margin-top:12px; display:grid; gap:9px;}
   label{font-size:13px; color:var(--muted); display:grid; gap:3px;}
-  input,textarea{font-family:inherit; font-size:15px; padding:8px 10px; border:1px solid var(--line); border-radius:9px; background:#fff; color:var(--ink);}
+  input{font-family:inherit; font-size:15px; padding:8px 10px; border:1px solid var(--line); border-radius:9px; background:#fff; color:var(--ink);}
   .twocol{display:grid; grid-template-columns:1fr 1fr; gap:9px;}
   .foot{margin-top:22px; text-align:center; font-size:12.5px; color:var(--muted); line-height:1.5;}
   .del{color:#b0563a; border-color:#e5c4b8;}
@@ -46,7 +51,18 @@
   <h1>🍂 Meal Prep &amp; Timing</h1>
   <div class="sub">Thanksgiving — Thursday, Nov 26, 2026</div>
   <div class="now" id="now"></div>
-  <div id="list"></div>
+
+  <h2>Next step</h2>
+  <div id="next"></div>
+
+  <h2>In process</h2>
+  <div id="inprocess"></div>
+
+  <h2>Up next</h2>
+  <div id="pending"></div>
+
+  <h2>Done</h2>
+  <div id="done"></div>
 
   <details class="addbox">
     <summary>＋ Add a dish</summary>
@@ -70,8 +86,8 @@
 
 <script>
 const SEED = [
-  {id:'seed-rolls', name:'Rolls', date:'2026-11-26', start:'09:30', durMin:180, durMax:300, note:'Set out at 9:30 to rise (3–5 hours)', done:false},
-  {id:'seed-sweet', name:'Sweet potatoes', date:'2026-11-26', start:'09:45', durMin:60, durMax:60, note:'In the oven at 9:45 · about an hour (per Mel)', done:false},
+  {id:'seed-rolls', name:'Rolls — set out to rise', date:'2026-11-26', start:'09:30', durMin:180, durMax:300, note:'Set out at 9:30 to rise (3–5 hours)', done:false},
+  {id:'seed-sweet', name:'Sweet potatoes — in the oven', date:'2026-11-26', start:'09:45', durMin:60, durMax:60, note:'In the oven at 9:45 · about an hour (per Mel)', done:false},
   {id:'seed-bake', name:'Rolls — bake', date:'2026-11-26', start:'12:30', durMin:15, durMax:140, note:'Bake 15–20 min after they finish rising. Start slides with the rise (ends 12:30–2:30 PM), so baked by ~12:45–2:50 PM', done:false},
   {id:'seed-chix-prep', name:'Chicken Au Poivre — prep', date:'2026-11-26', start:'14:40', durMin:20, durMax:20, note:'Spatchcock & season (Maldon + olive oil). Preheat oven to 375°F convection. Crush peppercorns; whisk cream with rosemary, garlic, shallots + 1 tsp Maldon', done:false},
   {id:'seed-chix-p1', name:'Chicken — roast, phase 1', date:'2026-11-26', start:'15:00', durMin:15, durMax:15, note:'Skin side up at 375°F convection, ~15 min, until slightly golden', done:false},
@@ -97,14 +113,29 @@ function fmtDur(m){
   const h=Math.floor(m/60), r=m%60;
   return r? h+' hr '+r+' min' : h+' hr';
 }
-function status(item, now){
-  if(item.done) return ['done','Done'];
-  const s=dt(item), e1=dt(item,item.durMin), e2=dt(item,item.durMax);
-  if(now < s) return ['wait','Starts '+fmt(s)];
-  if(now < e1) return ['going','Going · ready '+fmt(e1)+(item.durMax>item.durMin?'–'+fmt(e2):'')];
-  if(now <= e2) return ['ready','In the ready window'];
-  return ['ready','Ready since '+fmt(e2)];
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function card(it, now, extraCls){
+  const s=dt(it), e1=dt(it,it.durMin), e2=dt(it,it.durMax);
+  let cls,label;
+  if(it.done){ cls='done'; label='Done'; }
+  else if(now < s){ cls='wait'; label='Starts '+fmt(s); }
+  else if(now < e1){ cls='going'; label='Going · ready '+fmt(e1)+(it.durMax>it.durMin?'–'+fmt(e2):''); }
+  else if(now <= e2){ cls='ready'; label='In the ready window'; }
+  else { cls='ready'; label='Ready since '+fmt(e2); }
+  const readyTxt = it.durMax>it.durMin ? fmt(e1)+' – '+fmt(e2) : '~'+fmt(e1);
+  const local = !it.id.startsWith('seed-');
+  return `<div class="card ${extraCls||''}">
+    <div class="row1"><div class="dish">${esc(it.name)}</div><div class="chip ${cls}">${label}</div></div>
+    <div class="times">Start <b>${fmt(s)}</b> · ${fmtDur(it.durMin)}${it.durMax>it.durMin?'–'+fmtDur(it.durMax):''} · Ready <b>${readyTxt}</b></div>
+    ${it.note?`<div class="note">${esc(it.note)}</div>`:''}
+    <div class="actions">
+      <button onclick="toggleDone('${it.id}')">${it.done?'↩ Not done':'✓ Mark done'}</button>
+      ${local?`<button class="del" onclick="removeItem('${it.id}')">Remove</button>`:''}
+    </div>
+  </div>`;
 }
+
 function render(){
   const now=new Date();
   document.getElementById('now').textContent =
@@ -112,26 +143,43 @@ function render(){
   const doneMap=loadDone();
   const items=[...SEED.map(s=>({...s, done: !!doneMap[s.id]})), ...loadLocal()]
     .sort((a,b)=> dt(a)-dt(b) || a.name.localeCompare(b.name));
-  const list=document.getElementById('list');
-  if(!items.length){ list.innerHTML='<div class="empty">Nothing on the board yet.</div>'; return; }
-  list.innerHTML=items.map(it=>{
-    const [cls,label]=status(it,now);
-    const readyTxt = it.durMax>it.durMin
-      ? fmt(dt(it,it.durMin))+' – '+fmt(dt(it,it.durMax))
-      : '~'+fmt(dt(it,it.durMin));
-    const local = !it.id.startsWith('seed-');
-    return `<div class="card">
-      <div class="row1"><div class="dish">${esc(it.name)}</div><div class="chip ${cls}">${label}</div></div>
-      <div class="times">Start <b>${fmt(dt(it))}</b> · ${fmtDur(it.durMin)}${it.durMax>it.durMin?'–'+fmtDur(it.durMax):''} · Ready <b>${readyTxt}</b></div>
-      ${it.note?`<div class="note">${esc(it.note)}</div>`:''}
-      <div class="actions">
-        <button onclick="toggleDone('${it.id}')">${it.done?'↩ Not done':'✓ Mark done'}</button>
-        ${local?`<button class="del" onclick="removeItem('${it.id}')">Remove</button>`:''}
-      </div>
+  const active = items.filter(i=>!i.done);
+  const doneItems = items.filter(i=>i.done);
+
+  // NEXT STEP: earliest not-done item whose start has arrived (do it now);
+  // otherwise the soonest upcoming item.
+  let next=null, nextWhen='';
+  const due = active.filter(i=> dt(i) <= now);
+  if(due.length){ next = due[0]; nextWhen = dt(next, next.durMax) < now ? 'Should be finished by now — check it' : 'Now'; }
+  else if(active.length){ next = active[0]; nextWhen = 'At '+fmt(dt(next)); }
+
+  const nextEl=document.getElementById('next');
+  if(next){
+    nextEl.innerHTML = `<div class="nextcard">
+      <div class="nextlabel">Next step · ${nextWhen}</div>
+      <div class="nextdish">${esc(next.name)}</div>
+      <div class="times">Start <b>${fmt(dt(next))}</b> · Ready <b>${next.durMax>next.durMin ? fmt(dt(next,next.durMin))+' – '+fmt(dt(next,next.durMax)) : '~'+fmt(dt(next,next.durMin))}</b></div>
+      ${next.note?`<div class="note">${esc(next.note)}</div>`:''}
+      <div class="actions"><button class="primary" onclick="toggleDone('${next.id}')">✓ Mark done</button></div>
     </div>`;
-  }).join('');
+  } else {
+    nextEl.innerHTML = '<div class="empty">Everything\u2019s done. Time to eat. 🦃</div>';
+  }
+
+  // IN PROCESS: started, not finished, not the featured next step.
+  const inProc = active.filter(i=> i!==next && dt(i) <= now && now < dt(i, i.durMax));
+  document.getElementById('inprocess').innerHTML =
+    inProc.length ? inProc.map(i=>card(i,now)).join('') : '<div class="empty">Nothing cooking right now.</div>';
+
+  // UP NEXT: everything not started yet (except the featured next step), in time order.
+  const pending = active.filter(i=> i!==next && dt(i) > now);
+  document.getElementById('pending').innerHTML =
+    pending.length ? pending.map(i=>card(i,now)).join('') : '<div class="empty">Nothing waiting after this.</div>';
+
+  document.getElementById('done').innerHTML =
+    doneItems.length ? doneItems.map(i=>card(i,now,'donecard')).join('') : '<div class="empty">Nothing finished yet.</div>';
 }
-function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
 function toggleDone(id){
   if(id.startsWith('seed-')){
     const d=loadDone(); d[id]=!d[id]; saveDone(d);
@@ -156,7 +204,9 @@ document.getElementById('addForm').addEventListener('submit', e=>{
     durMin:durMin, durMax: isNaN(durMaxRaw)||durMaxRaw<durMin ? durMin : durMaxRaw,
     note:f.get('note').trim(), done:false
   });
-  saveLocal(items); e.target.reset(); render();
+  saveLocal(items); e.target.reset();
+  document.querySelector('input[name="date"]').value='2026-11-26';
+  render();
 });
 document.querySelector('input[name="date"]').value='2026-11-26';
 render();
