@@ -71,7 +71,8 @@
 <script>
 const SEED = [
   {id:'seed-rolls', name:'Rolls', date:'2026-11-26', start:'09:30', durMin:180, durMax:300, note:'Set out at 9:30 to rise (3–5 hours)', done:false},
-  {id:'seed-sweet', name:'Sweet potatoes', date:'2026-11-26', start:'09:45', durMin:60, durMax:60, note:'In the oven at 9:45 · about an hour (per Mel)', done:false}
+  {id:'seed-sweet', name:'Sweet potatoes', date:'2026-11-26', start:'09:45', durMin:60, durMax:60, note:'In the oven at 9:45 · about an hour (per Mel)', done:false},
+  {id:'seed-bake', name:'Rolls — bake', date:'2026-11-26', start:'12:30', durMin:30, durMax:150, note:'Bake about 30 min after they finish rising. Start slides with the rise (ends 12:30–2:30 PM), so baked by ~1:00–3:00 PM', done:false}
 ];
 const KEY='mealprep-items-v1', DKEY='mealprep-done-v1';
 function loadLocal(){ try{ return JSON.parse(localStorage.getItem(KEY))||[] }catch(e){ return [] } }
