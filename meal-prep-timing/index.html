@@ -94,7 +94,9 @@ const SEED = [
   {id:'seed-chix-p2', name:'Chicken — sauce on, roast phase 2', date:'2026-11-26', start:'15:15', durMin:30, durMax:35, note:'Pour peppercorn sauce over, add sherry around the chicken, raise oven to 400°F. Done at 165°F in the thickest part of the breast', done:false},
   {id:'seed-baste1', name:'Baste the chicken (1 of 2)', date:'2026-11-26', start:'15:30', durMin:1, durMax:1, note:'Quick baste, back in the oven', done:false},
   {id:'seed-baste2', name:'Baste the chicken (2 of 2)', date:'2026-11-26', start:'15:45', durMin:1, durMax:1, note:'Second baste — good moment to check the temp', done:false},
-  {id:'seed-chix-rest', name:'Chicken — rest', date:'2026-11-26', start:'15:50', durMin:10, durMax:10, note:'Rest at least 10 min before serving. Serve ~4:00 PM', done:false}
+  {id:'seed-chix-rest', name:'Chicken — rest', date:'2026-11-26', start:'15:50', durMin:10, durMax:10, note:'Rest at least 10 min before serving. Serve ~4:00 PM', done:false},
+  {id:'seed-stuff-boil', name:'Stuffing — boil water & butter', date:'2026-11-26', start:'15:45', durMin:5, durMax:5, note:'365 Organic Traditional Stuffing Mix: 1¾ cups water + 6 Tbsp butter in a large saucepan, bring to a boil over medium-high', done:false},
+  {id:'seed-stuff-stand', name:'Stuffing — mix, stand & fluff', date:'2026-11-26', start:'15:50', durMin:5, durMax:5, note:'Off the heat, stir in the stuffing mix, cover and let stand 5 min. Fluff with a fork and serve — holds covered until the chicken is ready at 4:00', done:false}
 ];
 const KEY='mealprep-items-v1', DKEY='mealprep-done-v1';
 function loadLocal(){ try{ return JSON.parse(localStorage.getItem(KEY))||[] }catch(e){ return [] } }
