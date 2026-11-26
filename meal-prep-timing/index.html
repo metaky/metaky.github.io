@@ -15,9 +15,6 @@
   h1{font-size:26px; font-weight:normal; text-align:center; margin-bottom:2px;}
   .sub{text-align:center; color:var(--muted); font-size:14px; margin-bottom:6px;}
   .now{text-align:center; font-size:15px; color:var(--clay); margin-bottom:14px; min-height:20px;}
-  .tabs{display:flex; gap:8px; justify-content:center; margin-bottom:18px;}
-  .tab{font-size:15px; padding:8px 22px; border-radius:20px; border:1px solid var(--line); background:#fff; color:var(--muted); cursor:pointer; font-family:inherit;}
-  .tab.on{background:var(--sage); border-color:var(--sage); color:#fff;}
   h2{font-size:13px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:normal; margin:22px 0 10px;}
   .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:12px; box-shadow:0 1px 3px rgba(90,70,40,.06);}
   .nextcard{background:#fdf3e3; border:2px solid var(--clay); border-radius:16px; padding:18px; box-shadow:0 2px 8px rgba(160,90,40,.15);}
@@ -49,44 +46,6 @@
   .foot{margin-top:22px; text-align:center; font-size:12.5px; color:var(--muted); line-height:1.5;}
   .del{color:#b0563a; border-color:#e5c4b8;}
 
-  /* ---- Schedule view: three switchable designs ---- */
-  .schedSwitch{display:flex; gap:6px; justify-content:center; margin-bottom:14px; flex-wrap:wrap;}
-  .schedSwitch button{font-size:13px; padding:6px 13px; border-radius:16px;}
-  .schedSwitch button.on{background:var(--clay); border-color:var(--clay); color:#fff;}
-  .hourlabel{position:absolute; right:6px; font-size:12px; color:var(--muted); transform:translateY(-7px); white-space:nowrap;}
-  .nowtag{position:absolute; background:var(--clay); color:#fff; font-size:10.5px; padding:2px 6px; border-radius:8px; z-index:6; transform:translateY(-9px);}
-  .legend{font-size:12.5px; color:var(--muted); margin-top:12px; line-height:1.6;}
-  /* A: spine & cards */
-  .aWrap{position:relative;}
-  .aSvg{position:absolute; left:0; top:0; overflow:visible; z-index:1;}
-  .aCard{margin-left:58px; background:var(--card); border:1px solid var(--line); border-left:4px solid var(--sage); border-radius:10px; padding:7px 10px; margin-bottom:6px; min-height:52px; position:relative; z-index:2;}
-  .aCard.kid{margin-left:76px; min-height:40px; background:#fdfaf3;}
-  .aCard .aname{font-size:14.5px; line-height:1.2;}
-  .aCard .asub{font-size:12px; color:var(--muted); margin-top:2px; line-height:1.35;}
-  .aCard.fin{opacity:.5;}
-  /* B: tracks + relaxed labels */
-  .bWrap{display:flex; align-items:stretch;}
-  .bHours{position:relative; width:42px; flex:none;}
-  .bChart{position:relative; flex:1;}
-  #bSvg{position:absolute; left:0; top:0; overflow:visible;}
-  .bLabel{position:absolute; right:0; padding:1px 0;}
-  .bLabel .lname{font-size:13.5px; line-height:1.2;}
-  .bLabel .lsub{font-size:11.5px; color:var(--muted); margin-top:1px;}
-  .bLabel .ldish{font-weight:bold;}
-  .bLabel.fin{opacity:.5;}
-  /* C: hour buckets */
-  .cBucket{border:1px solid var(--line); border-radius:12px; background:var(--card); margin-bottom:10px; overflow:hidden;}
-  .cBucket.nowB{border:2px solid var(--clay);}
-  .cHead{padding:8px 12px 4px; display:flex; justify-content:space-between; align-items:baseline;}
-  .cHour{font-size:16px;}
-  .cCount{font-size:12px; color:var(--muted);}
-  .cGantt{padding:2px 12px 8px;}
-  .cRow{display:flex; gap:8px; align-items:baseline; padding:6px 12px; border-top:1px dashed var(--line); font-size:14px;}
-  .cRow .ctime{color:var(--clay); white-space:nowrap; font-size:13px; min-width:64px;}
-  .cRow .csub{display:block; font-size:12px; color:var(--muted);}
-  .cRow.kid{padding-left:30px; font-size:13px;}
-  .cRow.fin{opacity:.5;}
-  .cQuiet{padding:9px 12px; font-size:13px; color:var(--muted); font-style:italic;}
 </style>
 </head>
 <body>
@@ -95,10 +54,6 @@
   <div class="sub">Thanksgiving — Thursday, Nov 26, 2026</div>
   <div class="now" id="now"></div>
 
-  <div class="tabs">
-    <button class="tab on" id="tabList" onclick="showView('list')">List</button>
-    <button class="tab" id="tabSched" onclick="showView('sched')">Schedule</button>
-  </div>
 
   <div id="viewList">
     <h2>Next step</h2>
@@ -133,17 +88,6 @@
     <div class="foot">Tap <b>▶ Start</b> when you begin a step — it moves to In process.<br>Tap <b>✓ Mark finished</b> only when the step is completely done.<br>Anything you add here is saved on this device only.</div>
   </div>
 
-  <div id="viewSched" style="display:none">
-    <div class="schedSwitch">
-      <button id="swA" onclick="setSchedStyle('A')">A · Cards</button>
-      <button id="swB" onclick="setSchedStyle('B')">B · Tracks</button>
-      <button id="swC" onclick="setSchedStyle('C')">C · Hours</button>
-    </div>
-    <div id="schedA"></div>
-    <div id="schedB" style="display:none"></div>
-    <div id="schedC" style="display:none"></div>
-    <div class="legend" id="schedLegend"></div>
-  </div>
 </div>
 
 <script>
@@ -271,285 +215,13 @@ function renderList(now){
     doneItems.length ? doneItems.map(i=>card(i,now,'donecard')).join('') : '<div class="empty">Nothing finished yet.</div>';
 }
 
-/* ---------- Schedule view: three switchable designs ---------- */
-const DAY_START = 9*60;        // 9:00 AM, minutes since midnight
-const DAY_END   = 17*60 + 30;  // 5:30 PM
-const DISH_COLORS = ['#7d8c6f','#c96f4a','#d9a441','#6f87a8','#9a7ba8','#5f9a8f','#b0563a','#8a7a63'];
-function minsOfDay(d){ return d.getHours()*60 + d.getMinutes(); }
-function dishColors(items){
-  const dishes = [];
-  for(const it of items){ const d = it.dish || it.name; if(!dishes.includes(d)) dishes.push(d); }
-  return { dishes, colorOf: d => DISH_COLORS[dishes.indexOf(d) % DISH_COLORS.length] };
-}
-function timeRangeTxt(it){
-  const range = it.durMax > it.durMin ? `–${fmt(dt(it, it.durMax))}` : '';
-  return `${fmt(dt(it))} – ${fmt(dt(it, it.durMin))}${range}`;
-}
-let schedStyle = localStorage.getItem('mealprep-sched-style') || 'A';
-function setSchedStyle(s){ schedStyle = s; localStorage.setItem('mealprep-sched-style', s); render(); }
-
-function renderSched(now){
-  const items = allItems().filter(i=> i.date==='2026-11-26');
-  for(const s of ['A','B','C']){
-    document.getElementById('sched'+s).style.display = schedStyle===s ? '' : 'none';
-    document.getElementById('sw'+s).classList.toggle('on', schedStyle===s);
-  }
-  const legend = document.getElementById('schedLegend');
-  if(schedStyle==='A'){
-    renderSchedA(now, items);
-    legend.textContent = 'A · Cards — steps in start order at full width, so nothing can overlap. The thin spine at left is the whole day compressed: segments show when each step runs (stacked sideways when they run at once), and a connector ties each segment to its card. ◆ = a quick checkpoint inside a longer step.';
-  } else if(schedStyle==='B'){
-    renderSchedB(now, items);
-    legend.textContent = 'B · Tracks — true time, but the quiet morning is compressed and the busy afternoon stretched so the cluster has room. Steps are thin tracks (no text inside); labels sit in a solved column with elbow connectors. ◆ = checkpoint riding on its parent step\u2019s track.';
-  } else {
-    renderSchedC(now, items);
-    legend.textContent = 'C · Hours — the day in hour buckets. Each bucket header carries a mini time-strip for that hour (bars = what runs, ◆ = checkpoints); quiet hours collapse to one line. The current hour is outlined.';
-  }
-}
-
-/* ----- A: spine & cards (ordinal order, full-width cards) ----- */
-function renderSchedA(now, items){
-  const el = document.getElementById('schedA');
-  const { colorOf } = dishColors(items);
-  const byId = {}; items.forEach(i=> byId[i.id]=i);
-  // Card geometry: fixed slot heights so spine math is deterministic
-  const slotH = it => it.parent ? 46 : 58;
-  let yCursor = 0;
-  const rows = items.map(it=>{
-    const h = slotH(it);
-    const r = { it, top: yCursor, h, center: yCursor + h/2 };
-    yCursor += h + 6;
-    return r;
-  });
-  const totalH = yCursor;
-  const tY = m => (m - DAY_START) / (DAY_END - DAY_START) * totalH;
-  // Lane-pack spine segments (checkpoints ride their parent's lane as diamonds)
-  const lanes = [];
-  const segs = [];
-  for(const it of items){
-    if(it.parent) continue;
-    const s = minsOfDay(dt(it)), e = minsOfDay(dt(it, it.durMax));
-    let lane = lanes.findIndex(end => s >= end);
-    if(lane === -1){ lane = lanes.length; lanes.push(0); }
-    lanes[lane] = e;
-    segs.push({ it, lane, y1: tY(s), y2: tY(minsOfDay(dt(it, it.durMin))), y3: tY(e) });
-  }
-  const laneX = lane => 6 + lane*8;
-  let g = '';
-  for(const sg of segs){
-    const col = sg.it.done ? '#bbbbbb' : colorOf(sg.it.dish || sg.it.name);
-    const x = laneX(sg.lane);
-    if(sg.y3 > sg.y2) g += `<rect x="${x}" y="${sg.y2}" width="5" height="${Math.max(sg.y3-sg.y2,2)}" rx="2" fill="${col}" fill-opacity="0.28"/>`;
-    g += `<rect x="${x}" y="${sg.y1}" width="5" height="${Math.max(sg.y2-sg.y1,4)}" rx="2" fill="${col}" fill-opacity="0.9"/>`;
-  }
-  for(const it of items){
-    if(!it.parent) continue;
-    const parent = byId[it.parent];
-    const pSeg = segs.find(sg => sg.it.id === it.parent);
-    const col = it.done ? '#bbbbbb' : colorOf(it.dish || it.name);
-    const cx = (pSeg ? laneX(pSeg.lane) : 6) + 2.5, cy = tY(minsOfDay(dt(it)));
-    g += `<rect x="${cx-4.5}" y="${cy-4.5}" width="9" height="9" transform="rotate(45 ${cx} ${cy})" fill="${col}" stroke="#faf5ec" stroke-width="1.2"/>`;
-    if(parent) g += '';
-  }
-  // Connectors: segment start -> card center (both sorted by start, so elbows never cross)
-  for(const r of rows){
-    const src = r.it.parent ? segs.find(sg => sg.it.id === r.it.parent) : segs.find(sg => sg.it.id === r.it.id);
-    if(!src) continue;
-    const col = r.it.done ? '#bbbbbb' : colorOf(r.it.dish || r.it.name);
-    const sx = laneX(src.lane) + 5;
-    const sy = r.it.parent ? tY(minsOfDay(dt(r.it))) : tY(minsOfDay(dt(r.it)));
-    g += `<polyline points="${sx},${sy} 50,${sy} 50,${r.center} 56,${r.center}" fill="none" stroke="${col}" stroke-width="1" stroke-opacity="0.5"/>`;
-  }
-  // Now marker on the spine
-  const nm = minsOfDay(now);
-  if(now.getDate()===26 && nm >= DAY_START && nm <= DAY_END){
-    g += `<line x1="0" y1="${tY(nm)}" x2="52" y2="${tY(nm)}" stroke="#c96f4a" stroke-width="2"/>`;
-  }
-  const cards = rows.map(r=>{
-    const it = r.it;
-    const dish = it.dish || it.name;
-    const col = colorOf(dish);
-    const others = items.filter(o => o.id !== it.id && !o.parent &&
-      minsOfDay(dt(o)) < minsOfDay(dt(it, it.durMin)) && minsOfDay(dt(o, o.durMin)) > minsOfDay(dt(it)));
-    const alsoTxt = others.length ? ` · ∥ also running: ${others.slice(0,2).map(o=>esc(o.short||o.name)).join(', ')}${others.length>2 ? ' +'+(others.length-2) : ''}` : '';
-    const parentTxt = it.parent && byId[it.parent] ? ` · ↳ during ${esc(byId[it.parent].short || byId[it.parent].name)}` : '';
-    return `<div class="aCard ${it.parent?'kid':''} ${it.done?'fin':''}" style="border-left-color:${it.done?'#bbb':col}; height:${r.h}px; overflow:hidden">
-      <div class="aname">${it.parent?'◆ ':''}${esc(it.name)}</div>
-      <div class="asub"><span style="color:${it.done?'#999':col}; font-weight:bold">${esc(dish)}</span> · ${timeRangeTxt(it)}${parentTxt}${alsoTxt}${it.started && !it.done ? ' · in process' : ''}${it.done ? ' · finished' : ''}</div>
-    </div>`;
-  }).join('');
-  el.innerHTML = `<div class="aWrap" style="min-height:${totalH}px">
-    <svg class="aSvg" width="58" height="${totalH}" viewBox="0 0 58 ${totalH}">${g}</svg>
-    ${cards}
-  </div>`;
-}
-
-/* ----- B: warped true-time tracks + relaxed label column ----- */
-function warpB(m){
-  const T1 = 14*60; // 2:00 PM: quiet morning compressed, busy afternoon stretched
-  if(m <= T1) return (m - DAY_START) * 0.42;
-  return (T1 - DAY_START) * 0.42 + (m - T1) * 3.0;
-}
-function renderSchedB(now, items){
-  const el = document.getElementById('schedB');
-  const { colorOf } = dishColors(items);
-  const byId = {}; items.forEach(i=> byId[i.id]=i);
-  const chartH = warpB(DAY_END);
-  // Lane-pack tracks; checkpoints ride the parent's lane
-  const lanes = [];
-  const laneOfItem = {};
-  for(const it of items){
-    if(it.parent) continue;
-    const s = minsOfDay(dt(it)), e = minsOfDay(dt(it, it.durMax));
-    let lane = lanes.findIndex(end => s >= end);
-    if(lane === -1){ lane = lanes.length; lanes.push(0); }
-    lanes[lane] = e;
-    laneOfItem[it.id] = lane;
-  }
-  const laneCenter = it => {
-    const lane = it.parent ? (laneOfItem[it.parent] ?? 0) : (laneOfItem[it.id] ?? 0);
-    return 10 + lane*13 + 4;
-  };
-  const LABEL_X = 10 + Math.max(lanes.length,1)*13 + 26;
-  // Relaxed labels: forward pass, min 38px per label
-  let cursor = 0;
-  const placed = items.map(it=>{
-    const anchor = warpB(minsOfDay(dt(it)));
-    const labelY = Math.max(anchor - 5, cursor);
-    cursor = labelY + 38;
-    return { it, anchor, labelY };
-  });
-  const totalH = Math.max(chartH, cursor + 6);
-  const W = el.clientWidth || 340;
-  let g = '';
-  let hoursHtml = '';
-  for(let m = Math.ceil(DAY_START/60)*60; m <= DAY_END; m += 60){
-    const y = warpB(m);
-    g += `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#e7dcc8" stroke-dasharray="3 3"/>`;
-    hoursHtml += `<div class="hourlabel" style="top:${y}px">${fmt(new Date(2026,10,26, Math.floor(m/60), m%60))}</div>`;
-  }
-  for(const p of placed){
-    const it = p.it;
-    const col = it.done ? '#bbbbbb' : colorOf(it.dish || it.name);
-    const cx = laneCenter(it);
-    if(it.parent){
-      g += `<rect x="${cx-4.5}" y="${p.anchor-4.5}" width="9" height="9" transform="rotate(45 ${cx} ${p.anchor})" fill="${col}" stroke="#faf5ec" stroke-width="1.2"/>`;
-    } else {
-      const y2 = warpB(minsOfDay(dt(it, it.durMin))), y3 = warpB(minsOfDay(dt(it, it.durMax)));
-      if(y3 > y2) g += `<rect x="${cx-3}" y="${y2}" width="6" height="${Math.max(y3-y2,2)}" rx="2" fill="${col}" fill-opacity="0.28"/>`;
-      g += `<rect x="${cx-3}" y="${p.anchor}" width="6" height="${Math.max(y2-p.anchor,4)}" rx="2" fill="${col}" fill-opacity="0.9"/>`;
-      if(it.started && !it.done) g += `<rect x="${cx-5.5}" y="${p.anchor}" width="11" height="${Math.max(y2-p.anchor,4)}" rx="3" fill="none" stroke="#c96f4a" stroke-width="1.6"/>`;
-    }
-    // Elbow leader: track -> label
-    const ly = p.labelY + 9;
-    g += `<polyline points="${cx},${p.anchor} ${LABEL_X-8},${p.anchor} ${LABEL_X-8},${ly} ${LABEL_X-2},${ly}" fill="none" stroke="${col}" stroke-width="1" stroke-opacity="0.55"/>`;
-  }
-  const nm = minsOfDay(now);
-  let nowTag = '';
-  if(now.getDate()===26 && nm >= DAY_START && nm <= DAY_END){
-    const y = warpB(nm);
-    g += `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#c96f4a" stroke-width="2"/>`;
-    nowTag = `<div class="nowtag" style="left:0; top:${y}px">now ${fmt(now)}</div>`;
-  }
-  const labels = placed.map(p=>{
-    const dish = p.it.dish || p.it.name;
-    const col = colorOf(dish);
-    return `<div class="bLabel ${p.it.done?'fin':''}" style="left:${LABEL_X}px; top:${p.labelY}px">
-      <div class="lname">${p.it.parent?'◆ ':''}${esc(p.it.short || p.it.name)}</div>
-      <div class="lsub"><span class="ldish" style="color:${p.it.done?'#999':col}">${esc(dish)}</span> · ${timeRangeTxt(p.it)}${p.it.started && !p.it.done ? ' · in process' : ''}${p.it.done ? ' · finished' : ''}</div>
-    </div>`;
-  }).join('');
-  el.innerHTML = `<div class="bWrap">
-    <div class="bHours" style="height:${totalH}px">${hoursHtml}</div>
-    <div class="bChart" style="height:${totalH}px">
-      <svg id="bSvg" width="${W}" height="${totalH}">${g}</svg>
-      ${labels}${nowTag}
-    </div>
-  </div>`;
-}
-
-/* ----- C: hour buckets with in-bucket mini time-strips ----- */
-function renderSchedC(now, items){
-  const el = document.getElementById('schedC');
-  const { colorOf } = dishColors(items);
-  const byId = {}; items.forEach(i=> byId[i.id]=i);
-  const nowH = now.getDate()===26 ? now.getHours() : -1;
-  let html = '';
-  for(let h = 9; h <= 17; h++){
-    const hStart = h*60, hEnd = hStart + 60;
-    const starts = items.filter(it => Math.floor(minsOfDay(dt(it))/60) === h);
-    const active = items.filter(it => !it.parent &&
-      minsOfDay(dt(it)) < hEnd && minsOfDay(dt(it, it.durMax)) > hStart);
-    const hourName = fmt(new Date(2026,10,26,h,0)).replace(':00 ',' ');
-    if(!starts.length){
-      const running = active.map(it => esc(it.short || it.name)).join(', ');
-      html += `<div class="cBucket"><div class="cQuiet">${hourName} — nothing starts${running ? ` · still running: ${running}` : ''}</div></div>`;
-      continue;
-    }
-    // Mini time-strip for this hour: x = minute of hour, 0..60 -> 0..300 viewBox units
-    let g = '';
-    const laneEnds = [];
-    const laneOfSeg = {};
-    for(const it of active){
-      const s = Math.max(minsOfDay(dt(it)), hStart), e = Math.min(minsOfDay(dt(it, it.durMax)), hEnd);
-      let lane = laneEnds.findIndex(end => s >= end);
-      if(lane === -1){ lane = laneEnds.length; laneEnds.push(0); }
-      laneEnds[lane] = e;
-      laneOfSeg[it.id] = lane;
-      const col = it.done ? '#bbbbbb' : colorOf(it.dish || it.name);
-      const x1 = (s-hStart)*5, x2 = Math.max((e-hStart)*5, x1+6);
-      const y = 3 + lane*9;
-      g += `<rect x="${x1}" y="${y}" width="${x2-x1}" height="6" rx="3" fill="${col}" fill-opacity="0.85"/>`;
-    }
-    for(const it of items){
-      if(!it.parent) continue;
-      const s = minsOfDay(dt(it));
-      if(s < hStart || s >= hEnd) continue;
-      const parent = byId[it.parent];
-      const lane = parent ? (laneOfSeg[parent.id] ?? 0) : 0;
-      const col = it.done ? '#bbbbbb' : colorOf(it.dish || it.name);
-      const cx = (s-hStart)*5, cy = 3 + lane*9 + 3;
-      g += `<rect x="${cx-4}" y="${cy-4}" width="8" height="8" transform="rotate(45 ${cx} ${cy})" fill="${col}" stroke="#fffdf8" stroke-width="1"/>`;
-    }
-    if(h === nowH){
-      const nx = (now.getMinutes())*5;
-      g += `<line x1="${nx}" y1="0" x2="${nx}" y2="${3 + Math.max(laneEnds.length,1)*9}" stroke="#c96f4a" stroke-width="2"/>`;
-    }
-    const stripH = 3 + Math.max(laneEnds.length,1)*9 + 2;
-    const rows = starts.map(it=>{
-      const dish = it.dish || it.name;
-      const col = colorOf(dish);
-      return `<div class="cRow ${it.parent?'kid':''} ${it.done?'fin':''}">
-        <span class="ctime">${fmt(dt(it))}</span>
-        <span>${it.parent?'◆ ':''}${esc(it.name)}<span class="csub"><span style="color:${it.done?'#999':col}; font-weight:bold">${esc(dish)}</span> · runs to ${fmt(dt(it, it.durMin))}${it.durMax>it.durMin ? ' (up to '+fmt(dt(it, it.durMax))+')' : ''}${it.started && !it.done ? ' · in process' : ''}${it.done ? ' · finished' : ''}</span></span>
-      </div>`;
-    }).join('');
-    html += `<div class="cBucket ${h===nowH?'nowB':''}">
-      <div class="cHead"><span class="cHour">${hourName}</span><span class="cCount">${starts.length} step${starts.length>1?'s':''} start</span></div>
-      <div class="cGantt"><svg width="100%" height="${stripH}" viewBox="0 0 300 ${stripH}" preserveAspectRatio="none" style="display:block; width:100%">${g}</svg></div>
-      ${rows}
-    </div>`;
-  }
-  el.innerHTML = html;
-}
-
 function render(){
   const now = new Date();
   document.getElementById('now').textContent =
     'It\u2019s '+ now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) +' now';
   renderList(now);
-  renderSched(now);
 }
 
-let currentView = 'list';
-function showView(v){
-  currentView = v;
-  document.getElementById('viewList').style.display = v==='list' ? '' : 'none';
-  document.getElementById('viewSched').style.display = v==='sched' ? '' : 'none';
-  document.getElementById('tabList').classList.toggle('on', v==='list');
-  document.getElementById('tabSched').classList.toggle('on', v==='sched');
-  render();
-}
 
 function toggleStart(id){
   if(id.startsWith('seed-')){
