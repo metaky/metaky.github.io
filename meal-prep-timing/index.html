@@ -49,20 +49,24 @@
   .foot{margin-top:22px; text-align:center; font-size:12.5px; color:var(--muted); line-height:1.5;}
   .del{color:#b0563a; border-color:#e5c4b8;}
 
-  /* ---- Schedule view ---- */
-  .sched{position:relative; margin-left:52px; border-left:1px solid var(--line);}
-  .hourline{position:absolute; left:-52px; right:0; border-top:1px dashed var(--line);}
-  .hourlabel{position:absolute; left:0; width:46px; text-align:right; font-size:12px; color:var(--muted); transform:translateY(-7px);}
-  .block{position:absolute; border-radius:9px; padding:5px 8px; overflow:hidden; border:1px solid var(--sage); background:#e6ebdd; color:var(--ink);}
-  .block .bname{font-size:13px; line-height:1.2;}
+  /* ---- Schedule view: one lane per dish, time runs downward ---- */
+  .schedWrap{display:flex; align-items:stretch;}
+  .schedHours{position:relative; width:46px; flex:none;}
+  .hourlabel{position:absolute; right:6px; font-size:12px; color:var(--muted); transform:translateY(-7px); white-space:nowrap;}
+  .schedScroll{overflow-x:auto; flex:1; -webkit-overflow-scrolling:touch; border:1px solid var(--line); border-radius:12px; background:var(--card);}
+  .sched{position:relative;}
+  .lanehead{position:absolute; top:0; text-align:center; font-size:13px; padding:8px 2px 6px; color:var(--ink); border-bottom:1px solid var(--line); border-left:1px dashed var(--line); background:var(--card); z-index:4; line-height:1.15;}
+  .hourline{position:absolute; left:0; right:0; border-top:1px dashed var(--line); z-index:0;}
+  .block{position:absolute; border-radius:9px; padding:5px 7px; overflow:hidden; border:1px solid var(--sage); background:#e6ebdd; color:var(--ink); z-index:2;}
+  .block .bname{font-size:12.5px; line-height:1.2;}
   .block .btime{font-size:11px; color:#5c6b52; margin-top:1px;}
-  .block.ext{border-style:dashed; background:repeating-linear-gradient(45deg,#eef1e6,#eef1e6 6px,#e2e8d5 6px,#e2e8d5 12px); border-top:none; border-radius:0 0 9px 9px;}
+  .block.ext{border-style:dashed; background:repeating-linear-gradient(45deg,#eef1e6,#eef1e6 6px,#e2e8d5 6px,#e2e8d5 12px); border-top:none; border-radius:0 0 9px 9px; z-index:1;}
   .block.started{border-color:var(--clay); background:#fbe9d9;}
   .block.started .btime{color:#9a6212;}
   .block.finished{opacity:.45; border-color:#bbb; background:#e8e8e8;}
   .block.finished .btime{color:#777;}
-  .nowline{position:absolute; left:-52px; right:0; border-top:2px solid var(--clay); z-index:5;}
-  .nowtag{position:absolute; left:-52px; transform:translateY(-8px); background:var(--clay); color:#fff; font-size:10.5px; padding:2px 6px; border-radius:8px; z-index:6;}
+  .nowline{position:absolute; left:0; right:0; border-top:2px solid var(--clay); z-index:5;}
+  .nowtag{position:absolute; left:4px; transform:translateY(-9px); background:var(--clay); color:#fff; font-size:10.5px; padding:2px 6px; border-radius:8px; z-index:6;}
   .legend{font-size:12.5px; color:var(--muted); margin-top:12px; line-height:1.6;}
 </style>
 </head>
@@ -111,31 +115,34 @@
   </div>
 
   <div id="viewSched" style="display:none">
-    <div class="sched" id="sched"></div>
+    <div class="schedWrap">
+      <div class="schedHours" id="schedHours"></div>
+      <div class="schedScroll"><div class="sched" id="sched"></div></div>
+    </div>
     <div class="legend">
-      Solid block = the step's run time. Striped tail = the "up to" end of a range (e.g. the rolls' rise).<br>
-      Orange block = started, in process. Gray = finished. The red line is right now.
+      One column per dish — steps in a column never overlap, and anything side by side at the same height is happening at the same time. Swipe sideways if your screen is narrow.<br>
+      Solid block = the step's run time. Striped tail = the "up to" end of a range (e.g. the rolls' rise). Orange = started, in process. Gray = finished. The red line is right now.
     </div>
   </div>
 </div>
 
 <script>
 const SEED = [
-  {id:'seed-rolls', name:'Rolls — set out to rise', date:'2026-11-26', start:'09:30', durMin:180, durMax:300, note:'Set out at 9:30 to rise (3–5 hours)'},
-  {id:'seed-sweet', name:'Sweet potatoes — in the oven', date:'2026-11-26', start:'09:45', durMin:60, durMax:60, note:'In the oven at 9:45 · about an hour (per Mel)'},
-  {id:'seed-bake', name:'Rolls — bake (alongside the chicken)', date:'2026-11-26', start:'15:00', durMin:15, durMax:20, note:'Bake at 375°F on the other rack while the chicken does phase 1 — out 3:15–3:20, then cover with a towel to stay warm until serving at 4:00. If the rise finished early, shape the rolls, cover them, and park somewhere cool (or the fridge) to slow the proof until bake time'},
-  {id:'seed-chix-prep', name:'Chicken Au Poivre — prep', date:'2026-11-26', start:'14:40', durMin:20, durMax:20, note:'Spatchcock & season (Maldon + olive oil). Preheat oven to 375°F convection. Crush peppercorns; whisk cream with rosemary, garlic, shallots + 1 tsp Maldon'},
-  {id:'seed-chix-p1', name:'Chicken — roast, phase 1', date:'2026-11-26', start:'15:00', durMin:15, durMax:15, note:'Skin side up at 375°F convection, ~15 min, until slightly golden'},
-  {id:'seed-chix-p2', name:'Chicken — sauce on, roast phase 2', date:'2026-11-26', start:'15:15', durMin:30, durMax:35, note:'Pour peppercorn sauce over, add sherry around the chicken, raise oven to 400°F. Done at 165°F in the thickest part of the breast'},
-  {id:'seed-baste1', name:'Baste the chicken (1 of 2)', date:'2026-11-26', start:'15:30', durMin:1, durMax:1, note:'Quick baste, back in the oven'},
-  {id:'seed-baste2', name:'Baste the chicken (2 of 2)', date:'2026-11-26', start:'15:45', durMin:1, durMax:1, note:'Second baste — good moment to check the temp'},
-  {id:'seed-chix-rest', name:'Chicken — rest', date:'2026-11-26', start:'15:50', durMin:10, durMax:10, note:'Rest at least 10 min before serving. Serve ~4:00 PM'},
-  {id:'seed-stuff-boil', name:'Stuffing — boil water & butter', date:'2026-11-26', start:'15:45', durMin:5, durMax:5, note:'365 Organic Traditional Stuffing Mix: 1¾ cups water + 6 Tbsp butter in a large saucepan, bring to a boil over medium-high'},
-  {id:'seed-stuff-stand', name:'Stuffing — mix, stand & fluff', date:'2026-11-26', start:'15:50', durMin:5, durMax:5, note:'Off the heat, stir in the stuffing mix, cover and let stand 5 min. Fluff with a fork and serve — holds covered until the chicken is ready at 4:00'},
-  {id:'seed-beans-roast', name:'Green beans — prep & roast', date:'2026-11-26', start:'15:20', durMin:25, durMax:30, note:'From frozen, do NOT thaw. Spread in a single layer on a sheet pan, toss with olive oil, salt, pepper & garlic powder. Roast at 400°F alongside the chicken — done when tender with browned, blistered spots'},
-  {id:'seed-beans-toss', name:'Green beans — toss halfway', date:'2026-11-26', start:'15:35', durMin:1, durMax:1, note:'Toss/flip the beans so they brown evenly, back in the oven'},
-  {id:'seed-blond-prep', name:'Blondies — prep & pan', date:'2026-11-26', start:'15:55', durMin:10, durMax:10, note:'Maple Butterscotch Blondies. Once the chicken is out, set the oven to 350°F (it coasts down from 400). Line an 8×8 pan with parchment, grease lightly. Melt 1 stick (4 oz) unsalted butter, whisk with 1 large egg, stir in the dry mix to a soft dough. Spread in pan, squeeze 7–8 lines of butterscotch syrup ~1 inch apart, drag a knife through in alternating directions'},
-  {id:'seed-blond-bake', name:'Blondies — bake', date:'2026-11-26', start:'16:05', durMin:20, durMax:22, note:'Center rack at 350°F until golden brown. Cool on a wire rack — dessert while/after you eat'}
+  {id:'seed-rolls', dish:'Rolls', short:'Set out to rise', name:'Rolls — set out to rise', date:'2026-11-26', start:'09:30', durMin:180, durMax:300, note:'Set out at 9:30 to rise (3–5 hours)'},
+  {id:'seed-sweet', dish:'Sweet potatoes', short:'In the oven', name:'Sweet potatoes — in the oven', date:'2026-11-26', start:'09:45', durMin:60, durMax:60, note:'In the oven at 9:45 · about an hour (per Mel)'},
+  {id:'seed-bake', dish:'Rolls', short:'Bake', name:'Rolls — bake (alongside the chicken)', date:'2026-11-26', start:'15:00', durMin:15, durMax:20, note:'Bake at 375°F on the other rack while the chicken does phase 1 — out 3:15–3:20, then cover with a towel to stay warm until serving at 4:00. If the rise finished early, shape the rolls, cover them, and park somewhere cool (or the fridge) to slow the proof until bake time'},
+  {id:'seed-chix-prep', dish:'Chicken', short:'Prep', name:'Chicken Au Poivre — prep', date:'2026-11-26', start:'14:40', durMin:20, durMax:20, note:'Spatchcock & season (Maldon + olive oil). Preheat oven to 375°F convection. Crush peppercorns; whisk cream with rosemary, garlic, shallots + 1 tsp Maldon'},
+  {id:'seed-chix-p1', dish:'Chicken', short:'Roast · phase 1', name:'Chicken — roast, phase 1', date:'2026-11-26', start:'15:00', durMin:15, durMax:15, note:'Skin side up at 375°F convection, ~15 min, until slightly golden'},
+  {id:'seed-chix-p2', dish:'Chicken', short:'Sauce on · roast phase 2', name:'Chicken — sauce on, roast phase 2', date:'2026-11-26', start:'15:15', durMin:30, durMax:35, note:'Pour peppercorn sauce over, add sherry around the chicken, raise oven to 400°F. Done at 165°F in the thickest part of the breast'},
+  {id:'seed-baste1', dish:'Chicken', short:'Baste 1 of 2', name:'Baste the chicken (1 of 2)', date:'2026-11-26', start:'15:30', durMin:1, durMax:1, note:'Quick baste, back in the oven'},
+  {id:'seed-baste2', dish:'Chicken', short:'Baste 2 of 2', name:'Baste the chicken (2 of 2)', date:'2026-11-26', start:'15:45', durMin:1, durMax:1, note:'Second baste — good moment to check the temp'},
+  {id:'seed-chix-rest', dish:'Chicken', short:'Rest', name:'Chicken — rest', date:'2026-11-26', start:'15:50', durMin:10, durMax:10, note:'Rest at least 10 min before serving. Serve ~4:00 PM'},
+  {id:'seed-stuff-boil', dish:'Stuffing', short:'Boil water & butter', name:'Stuffing — boil water & butter', date:'2026-11-26', start:'15:45', durMin:5, durMax:5, note:'365 Organic Traditional Stuffing Mix: 1¾ cups water + 6 Tbsp butter in a large saucepan, bring to a boil over medium-high'},
+  {id:'seed-stuff-stand', dish:'Stuffing', short:'Mix · stand · fluff', name:'Stuffing — mix, stand & fluff', date:'2026-11-26', start:'15:50', durMin:5, durMax:5, note:'Off the heat, stir in the stuffing mix, cover and let stand 5 min. Fluff with a fork and serve — holds covered until the chicken is ready at 4:00'},
+  {id:'seed-beans-roast', dish:'Green beans', short:'Prep & roast', name:'Green beans — prep & roast', date:'2026-11-26', start:'15:20', durMin:25, durMax:30, note:'From frozen, do NOT thaw. Spread in a single layer on a sheet pan, toss with olive oil, salt, pepper & garlic powder. Roast at 400°F alongside the chicken — done when tender with browned, blistered spots'},
+  {id:'seed-beans-toss', dish:'Green beans', short:'Toss halfway', name:'Green beans — toss halfway', date:'2026-11-26', start:'15:35', durMin:1, durMax:1, note:'Toss/flip the beans so they brown evenly, back in the oven'},
+  {id:'seed-blond-prep', dish:'Blondies', short:'Prep & pan', name:'Blondies — prep & pan', date:'2026-11-26', start:'15:55', durMin:10, durMax:10, note:'Maple Butterscotch Blondies. Once the chicken is out, set the oven to 350°F (it coasts down from 400). Line an 8×8 pan with parchment, grease lightly. Melt 1 stick (4 oz) unsalted butter, whisk with 1 large egg, stir in the dry mix to a soft dough. Spread in pan, squeeze 7–8 lines of butterscotch syrup ~1 inch apart, drag a knife through in alternating directions'},
+  {id:'seed-blond-bake', dish:'Blondies', short:'Bake', name:'Blondies — bake', date:'2026-11-26', start:'16:05', durMin:20, durMax:22, note:'Center rack at 350°F until golden brown. Cool on a wire rack — dessert while/after you eat'}
 ];
 const KEY='mealprep-items-v1', DKEY='mealprep-done-v1', SKEY='mealprep-started-v1';
 function loadLocal(){ try{ return JSON.parse(localStorage.getItem(KEY))||[] }catch(e){ return [] } }
@@ -244,63 +251,73 @@ function renderList(now){
     doneItems.length ? doneItems.map(i=>card(i,now,'donecard')).join('') : '<div class="empty">Nothing finished yet.</div>';
 }
 
-/* ---------- Schedule view ---------- */
+/* ---------- Schedule view: one lane per dish ---------- */
 const DAY_START = 9*60;        // 9:00 AM, minutes since midnight
 const DAY_END   = 17*60 + 30;  // 5:30 PM
 const PXMIN = 1.15;            // pixels per minute
+const HEAD_H = 34;             // dish header row height
+const LANE_W = 118;            // pixels per dish lane
 function minsOfDay(d){ return d.getHours()*60 + d.getMinutes(); }
 
 function renderSched(now){
   const el = document.getElementById('sched');
+  const hoursEl = document.getElementById('schedHours');
   const items = allItems().filter(i=> i.date==='2026-11-26');
-  const H = (DAY_END-DAY_START)*PXMIN;
+  const H = (DAY_END-DAY_START)*PXMIN + HEAD_H;
+
+  // Dish lanes, in the order dishes first appear on the board
+  const dishes = [];
+  for(const it of items){ const d = it.dish || it.name; if(!dishes.includes(d)) dishes.push(d); }
+  const laneOf = d => dishes.indexOf(d);
+  el.style.width = (dishes.length * LANE_W) + 'px';
+  el.style.height = H + 'px';
+  hoursEl.style.height = H + 'px';
+
+  let hoursHtml = '';
   let html = '';
 
-  // Hour gridlines + labels
+  // Hour labels (fixed column outside the scroll area) + gridlines (inside)
   for(let m = Math.ceil(DAY_START/60)*60; m <= DAY_END; m += 60){
-    const y = (m-DAY_START)*PXMIN;
+    const y = (m-DAY_START)*PXMIN + HEAD_H;
     const lbl = fmt(new Date(2026,10,26, Math.floor(m/60), m%60));
-    html += `<div class="hourline" style="top:${y}px"></div><div class="hourlabel" style="top:${y}px">${lbl}</div>`;
+    hoursHtml += `<div class="hourlabel" style="top:${y}px">${lbl}</div>`;
+    html += `<div class="hourline" style="top:${y}px"></div>`;
   }
 
-  // Lane packing so overlapping steps sit side by side
-  const lanes = []; // each lane: end-minute of its last block
-  const placed = items.map(it=>{
-    const s = minsOfDay(dt(it)), eMax = minsOfDay(dt(it, it.durMax));
-    let lane = lanes.findIndex(end => s >= end);
-    if(lane === -1){ lane = lanes.length; lanes.push(0); }
-    lanes[lane] = eMax;
-    return {it, s, eMin: minsOfDay(dt(it, it.durMin)), eMax, lane};
+  // Lane headers + separators
+  dishes.forEach((d, i)=>{
+    html += `<div class="lanehead" style="left:${i*LANE_W}px; width:${LANE_W}px; height:${HEAD_H}px">${esc(d)}</div>`;
   });
-  const nLanes = Math.max(lanes.length, 1);
-  const laneW = 100 / nLanes;
 
-  for(const p of placed){
-    const top = (p.s-DAY_START)*PXMIN;
-    const hMin = Math.max((p.eMin-p.s)*PXMIN, 30);
-    const left = `calc(${p.lane*laneW}% + 4px)`;
-    const width = `calc(${laneW}% - 8px)`;
-    const stateCls = p.it.done ? 'finished' : (p.it.started ? 'started' : '');
-    const range = p.it.durMax > p.it.durMin ? `–${fmt(dt(p.it, p.it.durMax))}` : '';
-    html += `<div class="block ${stateCls}" style="top:${top}px; height:${hMin}px; left:${left}; width:${width}; z-index:2">
-      <div class="bname">${esc(p.it.name)}</div>
-      <div class="btime">${fmt(dt(p.it))} – ${fmt(dt(p.it, p.it.durMin))}${range}</div>
+  // Blocks: a dish's own steps are sequential, so a lane never overlaps itself
+  for(const it of items){
+    const lane = laneOf(it.dish || it.name);
+    const s = minsOfDay(dt(it)), eMin = minsOfDay(dt(it, it.durMin)), eMax = minsOfDay(dt(it, it.durMax));
+    const top = (s-DAY_START)*PXMIN + HEAD_H;
+    const hMin = Math.max((eMin-s)*PXMIN, 34);
+    const left = (lane*LANE_W + 4) + 'px';
+    const width = (LANE_W - 8) + 'px';
+    const stateCls = it.done ? 'finished' : (it.started ? 'started' : '');
+    const range = it.durMax > it.durMin ? `–${fmt(dt(it, it.durMax))}` : '';
+    html += `<div class="block ${stateCls}" style="top:${top}px; height:${hMin}px; left:${left}; width:${width}">
+      <div class="bname">${esc(it.short || it.name)}</div>
+      <div class="btime">${fmt(dt(it))} – ${fmt(dt(it, it.durMin))}${range}</div>
     </div>`;
-    if(p.eMax > p.eMin){
-      const extTop = (p.eMin-DAY_START)*PXMIN;
-      const extH = Math.max((p.eMax-p.eMin)*PXMIN, 8);
-      html += `<div class="block ext ${stateCls}" style="top:${extTop}px; height:${extH}px; left:${left}; width:${width}; z-index:1"></div>`;
+    if(eMax > eMin){
+      const extTop = (eMin-DAY_START)*PXMIN + HEAD_H;
+      const extH = Math.max((eMax-eMin)*PXMIN, 8);
+      html += `<div class="block ext ${stateCls}" style="top:${extTop}px; height:${extH}px; left:${left}; width:${width}"></div>`;
     }
   }
 
   // Now line
   const nm = minsOfDay(now);
   if(now.getDate()===26 && nm >= DAY_START && nm <= DAY_END){
-    const y = (nm-DAY_START)*PXMIN;
+    const y = (nm-DAY_START)*PXMIN + HEAD_H;
     html += `<div class="nowline" style="top:${y}px"></div><div class="nowtag" style="top:${y}px">now ${fmt(now)}</div>`;
   }
 
-  el.style.height = H+'px';
+  hoursEl.innerHTML = hoursHtml;
   el.innerHTML = html;
 }
 
